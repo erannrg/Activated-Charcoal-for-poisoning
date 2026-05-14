@@ -116,8 +116,6 @@
 <script>
 /**
  * REFINED DATA LOGIC BASED ON 2026 COLLABORATIVE (TABLE 4)
- * 'addDose' = Column 4: "Additional dose of activated charcoal"
- * 'mdac' = Column 5: "MDAC" (Multiple-dose activated charcoal)
  */
 const poisonsDb = {
     "paracetamol": {
@@ -126,7 +124,7 @@ const poisonsDb = {
         IR: { windows: [{ max_h: 2, rec: "Strong", grade: "B", logic: "Strong recommendation within 2h if dose ≥200 mg/kg." }, { max_h: 4, rec: "Weak", grade: "B", logic: "Weakly suggested up to 4h if massive dose." }] },
         MR: { windows: [{ max_h: 4, rec: "Strong", grade: "B", logic: "Strongly recommended up to 4h for MR." }, { max_h: 12, rec: "Weak", grade: "B", logic: "Weakly suggested up to 12h for MR." }] },
         thresh: "≥200 mg/kg",
-        addDose: "conditional", // Column 4: "Consider if massive (>30g or >500mg/kg)"
+        addDose: "conditional",
         mdac: false 
     },
     "salicylates": {
@@ -135,7 +133,7 @@ const poisonsDb = {
         IR: { windows: [{ max_h: 2, rec: "Strong", grade: "C", logic: "Strongly recommended within 2h if >150mg/kg." }, { max_h: 6, rec: "Weak", grade: "C", logic: "Weakly suggested up to 6h if massive dose." }] },
         MR: { windows: [{ max_h: 4, rec: "Strong", grade: "C", logic: "Strongly recommended within 4h." }, { max_h: 12, rec: "Weak", grade: "C", logic: "Weakly suggested up to 12h." }] },
         thresh: "≥150 mg/kg", 
-        addDose: true, // Column 4: "Consider"
+        addDose: true,
         mdac: true 
     },
     "carbamazepine": {
@@ -144,7 +142,7 @@ const poisonsDb = {
         IR: { windows: [{ max_h: 2, rec: "Strong", grade: "C", logic: "Strong recommendation within 2h if ≥25 mg/kg." }, { max_h: 6, rec: "Weak", grade: "C", logic: "Weakly suggested up to 6h." }] },
         MR: { windows: [{ max_h: 4, rec: "Strong", grade: "C", logic: "Strong recommendation for MR within 4h." }, { max_h: 12, rec: "Weak", grade: "C", logic: "Weakly suggested for MR up to 12h." }] },
         thresh: "≥25 mg/kg", 
-        addDose: true, // Column 4: "Consider"
+        addDose: true,
         mdac: true 
     },
     "theophylline": {
@@ -153,7 +151,7 @@ const poisonsDb = {
         IR: { windows: [{ max_h: 1, rec: "Strong", grade: "C", logic: "Strong within 1h." }, { max_h: 2, rec: "Weak", grade: "C", logic: "Weak up to 2h." }] },
         MR: { windows: [{ max_h: 3, rec: "Strong", grade: "C", logic: "Strong within 3h." }, { max_h: 6, rec: "Weak", grade: "C", logic: "Weak up to 6h." }] },
         thresh: "Toxic dose", 
-        addDose: true, // Column 4: "Consider"
+        addDose: true,
         mdac: true 
     },
     "dapsone": {
@@ -172,14 +170,14 @@ const poisonsDb = {
         name: "Thallium",
         IR: { windows: [{ max_h: 1, rec: "Strong", grade: "D", logic: "Strong within 1h." }, { max_h: 2, rec: "Weak", grade: "D", logic: "Weak up to 2h." }] },
         thresh: "Any dose",
-        addDose: true, mdac: false // Column 4: "Yes"
+        addDose: true, mdac: false 
     },
     "citalopram": {
         name: "Citalopram / Escitalopram",
-        val: 600, // mg total usually (approx 10mg/kg for 60kg patient)
+        val: 600,
         IR: { windows: [{ max_h: 1, rec: "Strong", grade: "C", logic: "Strong within 1h if massive dose." }, { max_h: 2, rec: "Weak", grade: "C", logic: "Weak up to 2h." }] },
         thresh: "≥600mg (C) / 400mg (E)",
-        addDose: true, mdac: false // Column 4: "Consider"
+        addDose: true, mdac: false 
     },
     "verapamil": {
         name: "Verapamil (CCB)",
@@ -187,7 +185,7 @@ const poisonsDb = {
         IR: { windows: [{ max_h: 1, rec: "Weak", grade: "D", logic: "Weak within 1h for IR." }] },
         MR: { 
             windows: [{ max_h: 4, rec: "Strong", grade: "D", logic: "Strong for MR within 4h." }, { max_h: 12, rec: "Weak", grade: "D", logic: "Weak up to 12h." }],
-            addDoseOverride: true // Column 4: "Yes" for MR
+            addDoseOverride: true 
         },
         thresh: "Toxic dose", addDose: false 
     },
@@ -197,7 +195,7 @@ const poisonsDb = {
         IR: { windows: [{ max_h: 1, rec: "Weak", grade: "D", logic: "Weak within 1h for IR." }] },
         MR: { 
             windows: [{ max_h: 4, rec: "Strong", grade: "D", logic: "Strong for MR within 4h." }, { max_h: 12, rec: "Weak", grade: "D", logic: "Weak up to 12h." }],
-            addDoseOverride: true // Column 4: "Yes" for MR
+            addDoseOverride: true 
         },
         thresh: "Toxic dose", addDose: false 
     },
@@ -265,27 +263,12 @@ function calculateRecommendation() {
         return;
     }
 
-    // Normalized Dose Calculation (Standard adult 70kg used for gram/mg total conversions)
+    // Normalized Dose Calculation
     let doseInMgKg = 0;
     if (!isNaN(doseRaw)) {
-        if (unit === 'mgkg') {
-            doseInMgKg = doseRaw;
-        } else if (unit === 'g') {
-            doseInMgKg = (doseRaw * 1000) / 70;
-        } else if (unit === 'mg') {
-            doseInMgKg = doseRaw / 70;
-        }
-    }
-
-    if (!isNaN(doseRaw) && drug.val) {
-        doseEl.classList.remove('hidden');
-        if (doseInMgKg >= drug.val) {
-            doseEl.className = "p-3 rounded border text-sm bg-green-50 border-green-200 text-green-800";
-            doseEl.innerHTML = `✅ <strong>Dose Check:</strong> Ingested dose (~${doseInMgKg.toFixed(1)} mg/kg) meets threshold for Strong Recommendation (${drug.val} mg/kg).`;
-        } else {
-            doseEl.className = "p-3 rounded border text-sm bg-yellow-50 border-yellow-200 text-yellow-800";
-            doseEl.innerHTML = `⚠️ <strong>Dose Check:</strong> Ingested dose (~${doseInMgKg.toFixed(1)} mg/kg) is below typical strong threshold (${drug.val} mg/kg).`;
-        }
+        if (unit === 'mgkg') doseInMgKg = doseRaw;
+        else if (unit === 'g') doseInMgKg = (doseRaw * 1000) / 70;
+        else if (unit === 'mg') doseInMgKg = doseRaw / 70;
     }
 
     const windows = configSet.windows || [];
@@ -294,6 +277,22 @@ function calculateRecommendation() {
         if (hours <= win.max_h) {
             activeWin = win;
             break; 
+        }
+    }
+
+    // DOSE CHECK UI - Modified to account for window
+    if (!isNaN(doseRaw) && drug.val) {
+        doseEl.classList.remove('hidden');
+        if (!activeWin) {
+            // OUT OF WINDOW: Change wording to be neutral/informative
+            doseEl.className = "p-3 rounded border text-sm bg-gray-50 border-gray-200 text-gray-600";
+            doseEl.innerHTML = `ℹ️ <strong>Dose Note:</strong> Ingested dose (~${doseInMgKg.toFixed(1)} mg/kg) would normally meet threshold, but the <strong>time since ingestion exceeds the recommended window.</strong>`;
+        } else if (doseInMgKg >= drug.val) {
+            doseEl.className = "p-3 rounded border text-sm bg-green-50 border-green-200 text-green-800";
+            doseEl.innerHTML = `✅ <strong>Dose Check:</strong> Ingested dose (~${doseInMgKg.toFixed(1)} mg/kg) meets threshold for Strong Recommendation (${drug.val} mg/kg).`;
+        } else {
+            doseEl.className = "p-3 rounded border text-sm bg-yellow-50 border-yellow-200 text-yellow-800";
+            doseEl.innerHTML = `⚠️ <strong>Dose Check:</strong> Ingested dose (~${doseInMgKg.toFixed(1)} mg/kg) is below typical strong threshold (${drug.val} mg/kg). Recommendation remains ${activeWin.rec}.`;
         }
     }
 
@@ -308,16 +307,15 @@ function calculateRecommendation() {
         card.style.borderColor = "#f59e0b"; 
         strength.textContent = "NOT RECOMMENDED (OUT OF WINDOW)";
         strength.className = "inline-block px-3 py-1 rounded text-sm font-bold mb-4 bg-yellow-100 text-yellow-700";
-        logicEl.textContent = configSet.logic_over || `Beyond recommended timeframe. Risks likely outweigh benefits.`;
+        logicEl.textContent = configSet.logic_over || `Beyond recommended timeframe. The evidence suggests that risks likely outweigh benefits after ${hours} hours for this formulation.`;
         document.getElementById('res_grade').textContent = "Grade D (Consensus)";
     }
 
     document.getElementById('res_threshold').textContent = drug.thresh || "Toxic dose";
 
-    // Column 4 Logic: Additional Dose
+    // Additional Dose Logic
     let showAddDose = false;
     if (drug.addDose === true) showAddDose = true;
-    // Paracetamol logic: >30g total or >500mg/kg
     if (drug.addDose === "conditional" && (doseInMgKg >= 500 || (unit === 'g' && doseRaw >= 30))) showAddDose = true; 
     if (formType === 'MR' && configSet.addDoseOverride) showAddDose = true; 
 
@@ -328,7 +326,7 @@ function calculateRecommendation() {
         notes.appendChild(div);
     }
     
-    // Column 5 Logic: MDAC
+    // MDAC Logic
     if (drug.mdac && hours <= 12) {
         const div = document.createElement('div');
         div.className = "p-3 bg-purple-50 text-purple-800 border border-purple-200 rounded text-sm font-medium";
