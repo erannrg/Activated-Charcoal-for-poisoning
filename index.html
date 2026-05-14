@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activated Charcoal Tool 2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .gradient-bg { background: linear-gradient(135deg, #1a1a1a 0%, #2d3436 100%); }
+        .card { background: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen pb-10">
+
+<div class="gradient-bg text-white py-8 px-4 mb-6 text-center">
+    <h1 class="text-3xl font-bold mb-2">🖤 Activated Charcoal Recommendation Tool</h1>
+    <p class="text-gray-300">Based on the 2026 Clinical Toxicology Recommendations Collaborative — Table 4</p>
+</div>
+
+<div class="max-w-4xl mx-auto px-4">
+    <!-- Airway Safety Check (Mandatory) -->
+    <div class="card p-6 mb-6 border-l-8 border-red-500">
+        <h2 class="text-xl font-bold text-red-700 mb-4 flex items-center">
+            ⚠️ MANDATORY SAFETY CHECK
+        </h2>
+        <div class="space-y-3">
+            <label class="flex items-center space-x-3 text-gray-700">
+                <input type="checkbox" id="airway_check" class="w-5 h-5">
+                <span>Patient has intact airway reflexes OR is intubated?</span>
+            </label>
+            <label class="flex items-center space-x-3 text-gray-700">
+                <input type="checkbox" id="perforation_check" class="w-5 h-5">
+                <span>NO risk of GI perforation or obstruction?</span>
+            </label>
+        </div>
+    </div>
+
+    <!-- Main Tool -->
+    <div class="card p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+                <label class="block text-sm font-semibold text-gray-600 mb-1">Drug / Poison</label>
+                <select id="drug_select" class="w-full p-2 border rounded-md bg-white">
+                    <option value="">Select a toxin...</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-600 mb-1">Formulation</label>
+                <div class="flex space-x-4 pt-2">
+                    <label class="flex items-center"><input type="radio" name="form" value="IR" checked class="mr-2"> Immediate Release</label>
+                    <label class="flex items-center"><input type="radio" name="form" value="MR" class="mr-2"> Modified Release</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+                <label class="block text-sm font-semibold text-gray-600 mb-1">Time Since Ingestion (Hours)</label>
+                <input type="range" id="hours_range" min="0" max="24" step="0.5" value="1" class="w-full">
+                <div id="hours_display" class="text-center font-bold text-blue-600">1.0 hours</div>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-600 mb-1">Estimated Dose</label>
+                <input type="text" id="dose_input" placeholder="e.g. 200 mg/kg" class="w-full p-2 border rounded-md">
+            </div>
+        </div>
+
+        <button onclick="calculateRecommendation()" class="w-full bg-black text-white py-3 rounded-lg font-bold hover:bg-gray-800 transition">
+            GET RECOMMENDATION
+        </button>
+    </div>
+
+    <!-- Results Area -->
+    <div id="result_area" class="mt-6 hidden">
+        <div id="rec_card" class="card p-6 border-t-8">
+            <h3 id="res_title" class="text-2xl font-bold mb-2"></h3>
+            <div id="res_strength" class="inline-block px-3 py-1 rounded text-sm font-bold mb-4"></div>
+            
+            <div class="space-y-4">
+                <div class="bg-gray-50 p-4 rounded border">
+                    <p id="res_logic" class="text-gray-800 italic"></p>
+                </div>
+                
+                <div id="special_notes" class="space-y-2"></div>
+                
+                <div class="grid grid-cols-2 gap-4 text-sm border-t pt-4">
+                    <div>
+                        <span class="text-gray-500 block">Quality of Evidence</span>
+                        <span id="res_grade" class="font-bold"></span>
+                    </div>
+                    <div>
+                        <span class="text-gray-500 block">Threshold Mentioned</span>
+                        <span id="res_threshold" class="font-bold"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-8 text-center text-xs text-gray-500 italic">
+        <p>Adult Dose: 50 g | Child Dose: 1 g/kg (max 50 g)</p>
+        <p class="mt-2">This tool is for educational purposes for clinical toxicologists and medical professionals. Always consult your local Poison Centre.</p>
+    </div>
+</div>
+
+<script>
+// ====================== 2026 CLINICAL DATABASE ======================
+const poisonsDb = {
+    "paracetamol": {
+        name: "Paracetamol (Acetaminophen)",
+        IR: { 
+            rec: "Strong", grade: "B", 
+            logic: "Recommended within 2h if ≥200mg/kg or 10g; or within 4h if ≥350mg/kg.",
+            max_h: 4, thresh: "200-350 mg/kg"
+        },
+        addDose: true,
+        mdac: false
+    },
+    "carbamazepine": {
+        name: "Carbamazepine",
+        IR: { rec: "Strong", grade: "C", max_h: 6, thresh: "≥25 mg/kg", logic: "Highly effective at reducing absorption." },
+        MR: { rec: "Strong", grade: "C", max_h: 12, thresh: "Any toxic dose", logic: "Delayed absorption likely." },
+        addDose: true,
+        mdac: true
+    },
+    "theophylline": {
+        name: "Theophylline / Aminophylline",
+        IR: { rec: "Strong", grade: "C", max_h: 2, thresh: "Any toxic dose", logic: "Rapid absorption; early AC is critical." },
+        MR: { rec: "Strong", grade: "C", max_h: 6, thresh: "Any toxic dose", logic: "Recommended up to 3h (Strong) or 6h (Weak)." },
+        addDose: true,
+        mdac: true
+    },
+    "lithium": {
+        name: "Lithium",
+        IR: { rec: "No Role", grade: "D", logic: "AC does not bind to inorganic metal salts.", thresh: "N/A" },
+        mdac: false
+    },
+    "iron": {
+        name: "Iron",
+        IR: { rec: "No Role", grade: "C", logic: "AC does not bind to iron.", thresh: "N/A" },
+        mdac: false
+    },
+    "salicylates": {
+        name: "Salicylates (Aspirin)",
+        IR: { rec: "Strong", grade: "C", max_h: 2, thresh: "≥150 mg/kg", logic: "Suggested up to 4h if dose >300mg/kg or 6h if >500mg/kg." },
+        MR: { rec: "Strong", grade: "C", max_h: 6, thresh: "≥150 mg/kg", logic: "Modified release aspirin requires extended window." },
+        addDose: true,
+        mdac: false
+    },
+    "valproate": {
+        name: "Valproic Acid / Valproate",
+        IR: { rec: "Strong", grade: "D", max_h: 2, thresh: "≥200 mg/kg", logic: "Suggested up to 4-6h for very large ingestions." },
+        addDose: true,
+        mdac: true
+    },
+    "ccb_verapamil": {
+        name: "Verapamil (CCB)",
+        IR: { rec: "Weak", grade: "D", max_h: 2, thresh: "Toxic dose", logic: "Assess risk vs benefit." },
+        MR: { rec: "Strong", grade: "D", max_h: 6, thresh: "Toxic dose", logic: "Stronger indication for MR preparations." },
+        addDose: true,
+        mdac: false
+    },
+    "digoxin": {
+        name: "Digoxin / Cardiac Glycosides",
+        IR: { rec: "Strong", grade: "C", max_h: 6, thresh: "Any toxic dose", logic: "AC binds effectively; repeat if dose large." },
+        mdac: true
+    },
+    "colchicine": {
+        name: "Colchicine",
+        IR: { rec: "Strong", grade: "D", max_h: 6, thresh: "≥0.3 mg/kg", logic: "Early decontamination is vital due to high mortality." },
+        mdac: true
+    },
+    "paraquat": {
+        name: "Paraquat",
+        IR: { rec: "Strong", grade: "D", max_h: 2, thresh: "Any amount", logic: "Fuller's Earth preferred but AC is an acceptable alternative." },
+        addDose: true
+    }
+};
+
+// Population select
+const select = document.getElementById('drug_select');
+Object.keys(poisonsDb).sort().forEach(key => {
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = poisonsDb[key].name;
+    select.appendChild(opt);
+});
+
+// Update slider display
+const slider = document.getElementById('hours_range');
+slider.oninput = function() {
+    document.getElementById('hours_display').textContent = parseFloat(this.value).toFixed(1) + " hours";
+};
+
+function calculateRecommendation() {
+    const airway = document.getElementById('airway_check').checked;
+    const perforation = document.getElementById('perforation_check').checked;
+    const drugKey = select.value;
+    const form = document.querySelector('input[name="form"]:checked').value;
+    const hours = parseFloat(slider.value);
+    const resultArea = document.getElementById('result_area');
+
+    if (!drugKey) {
+        alert("Please select a toxin.");
+        return;
+    }
+
+    resultArea.classList.remove('hidden');
+    const drug = poisonsDb[drugKey];
+    const config = drug[form] || drug['IR'];
+    const card = document.getElementById('rec_card');
+    const title = document.getElementById('res_title');
+    const strength = document.getElementById('res_strength');
+    const notes = document.getElementById('special_notes');
+
+    title.textContent = drug.name;
+    notes.innerHTML = "";
+
+    // 1. Check Airway Safety First
+    if (!airway || !perforation) {
+        card.style.borderColor = "#ef4444";
+        strength.textContent = "CONTRAINDICATED";
+        strength.className = "inline-block px-3 py-1 rounded text-sm font-bold mb-4 bg-red-100 text-red-700";
+        document.getElementById('res_logic').textContent = "AC should NOT be administered if the airway is unprotected or there is risk of GI perforation/obstruction.";
+        return;
+    }
+
+    // 2. Evaluate Specific Toxin Logic
+    let recLevel = config.rec;
+    let logicMsg = config.logic;
+    
+    if (config.rec === "No Role") {
+        card.style.borderColor = "#6b7280";
+        strength.textContent = "NO CLINICAL ROLE";
+        strength.className = "inline-block px-3 py-1 rounded text-sm font-bold mb-4 bg-gray-100 text-gray-700";
+    } else if (hours > config.max_h) {
+        card.style.borderColor = "#f59e0b";
+        strength.textContent = "OUTSIDE WINDOW";
+        strength.className = "inline-block px-3 py-1 rounded text-sm font-bold mb-4 bg-yellow-100 text-yellow-700";
+        logicMsg = `Standard recommendation window is ${config.max_h} hours. Administration beyond this is generally not recommended unless ongoing absorption is suspected.`;
+    } else {
+        card.style.borderColor = config.rec === "Strong" ? "#10b981" : "#3b82f6";
+        strength.textContent = config.rec.toUpperCase() + " RECOMMENDATION";
+        strength.className = config.rec === "Strong" ? 
+            "inline-block px-3 py-1 rounded text-sm font-bold mb-4 bg-green-100 text-green-700" :
+            "inline-block px-3 py-1 rounded text-sm font-bold mb-4 bg-blue-100 text-blue-700";
+    }
+
+    document.getElementById('res_logic').textContent = logicMsg;
+    document.getElementById('res_grade').textContent = "Grade " + config.grade;
+    document.getElementById('res_threshold').textContent = config.thresh;
+
+    // 3. Additional Dose and MDAC badges
+    if (drug.addDose) {
+        const div = document.createElement('div');
+        div.className = "p-2 bg-purple-50 text-purple-700 border border-purple-200 rounded text-sm flex items-center";
+        div.innerHTML = "<span>➕ <b>Additional Dose AC:</b> A second dose may be considered if initial decontamination was delayed or dose is massive.</span>";
+        notes.appendChild(div);
+    }
+    if (drug.mdac) {
+        const div = document.createElement('div');
+        div.className = "p-2 bg-blue-50 text-blue-700 border border-blue-200 rounded text-sm flex items-center";
+        div.innerHTML = "<span>🔄 <b>MDAC Recommended:</b> This drug undergoes enterohepatic/enteroenteric circulation or has a long half-life.</span>";
+        notes.appendChild(div);
+    }
+}
+</script>
+
+</body>
+</html>
