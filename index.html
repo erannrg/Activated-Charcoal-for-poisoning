@@ -63,7 +63,7 @@
                 <label class="block text-sm font-semibold text-gray-600 mb-1">Estimated Ingested Dose</label>
                 <div class="flex">
                     <input type="number" id="dose_input" placeholder="Amount" class="w-2/3 p-2 border border-r-0 rounded-l-md focus:ring-2 focus:ring-black outline-none">
-                    <select id="unit_select" class="w-1/3 p-2 border rounded-r-md bg-gray-50 focus:ring-2 focus:ring-black outline-none font-medium">
+                    <select id="unit_select" class="w-1/3 p-2 border rounded-r-md bg-gray-100 focus:ring-2 focus:ring-black outline-none font-medium cursor-pointer">
                         <option value="mgkg">mg/kg</option>
                         <option value="g">grams (total)</option>
                         <option value="mg">mg (total)</option>
@@ -176,7 +176,7 @@ const poisonsDb = {
     },
     "citalopram": {
         name: "Citalopram / Escitalopram",
-        val: 600, // This is total mg for adult logic usually
+        val: 600, // mg total usually (approx 10mg/kg for 60kg patient)
         IR: { windows: [{ max_h: 1, rec: "Strong", grade: "C", logic: "Strong within 1h if massive dose." }, { max_h: 2, rec: "Weak", grade: "C", logic: "Weak up to 2h." }] },
         thresh: "≥600mg (C) / 400mg (E)",
         addDose: true, mdac: false // Column 4: "Consider"
@@ -265,19 +265,26 @@ function calculateRecommendation() {
         return;
     }
 
-    // Normalized Dose Check (Assumes 70kg for total dose conversions if mg/kg is required)
-    let doseInMgKg = doseRaw;
-    if (unit === 'g') doseInMgKg = (doseRaw * 1000) / 70;
-    if (unit === 'mg') doseInMgKg = doseRaw / 70;
+    // Normalized Dose Calculation (Standard adult 70kg used for gram/mg total conversions)
+    let doseInMgKg = 0;
+    if (!isNaN(doseRaw)) {
+        if (unit === 'mgkg') {
+            doseInMgKg = doseRaw;
+        } else if (unit === 'g') {
+            doseInMgKg = (doseRaw * 1000) / 70;
+        } else if (unit === 'mg') {
+            doseInMgKg = doseRaw / 70;
+        }
+    }
 
     if (!isNaN(doseRaw) && drug.val) {
         doseEl.classList.remove('hidden');
         if (doseInMgKg >= drug.val) {
             doseEl.className = "p-3 rounded border text-sm bg-green-50 border-green-200 text-green-800";
-            doseEl.innerHTML = `✅ <strong>Dose Check:</strong> Ingested dose meets threshold for Strong Recommendation (${drug.val} mg/kg).`;
+            doseEl.innerHTML = `✅ <strong>Dose Check:</strong> Ingested dose (~${doseInMgKg.toFixed(1)} mg/kg) meets threshold for Strong Recommendation (${drug.val} mg/kg).`;
         } else {
             doseEl.className = "p-3 rounded border text-sm bg-yellow-50 border-yellow-200 text-yellow-800";
-            doseEl.innerHTML = `⚠️ <strong>Dose Check:</strong> Ingested dose is below typical strong threshold (${drug.val} mg/kg).`;
+            doseEl.innerHTML = `⚠️ <strong>Dose Check:</strong> Ingested dose (~${doseInMgKg.toFixed(1)} mg/kg) is below typical strong threshold (${drug.val} mg/kg).`;
         }
     }
 
@@ -310,8 +317,9 @@ function calculateRecommendation() {
     // Column 4 Logic: Additional Dose
     let showAddDose = false;
     if (drug.addDose === true) showAddDose = true;
-    if (drug.addDose === "conditional" && (doseInMgKg >= 500 || (unit === 'g' && doseRaw >= 30))) showAddDose = true; // Paracetamol massive
-    if (formType === 'MR' && configSet.addDoseOverride) showAddDose = true; // Verapamil/Diltiazem MR
+    // Paracetamol logic: >30g total or >500mg/kg
+    if (drug.addDose === "conditional" && (doseInMgKg >= 500 || (unit === 'g' && doseRaw >= 30))) showAddDose = true; 
+    if (formType === 'MR' && configSet.addDoseOverride) showAddDose = true; 
 
     if (showAddDose && hours <= 12) {
         const div = document.createElement('div');
