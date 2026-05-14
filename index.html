@@ -105,27 +105,33 @@
 </div>
 
 <script>
-// ====================== REFINED 2026 DATABASE (REFINED LOGIC) ======================
+/**
+ * REFINED DATA LOGIC BASED ON 2026 COLLABORATIVE (TABLE 4)
+ * - Strong Recommendation (Green)
+ * - Weak Recommendation (Blue)
+ * - Not Recommended (Yellow/Gray)
+ */
 const poisonsDb = {
     "paracetamol": {
         name: "Paracetamol (Acetaminophen)",
         windows: [
-            { max_h: 2, rec: "Strong", grade: "B", logic: "Strong recommendation within 2h of ingestion." },
-            { max_h: 4, rec: "Weak", grade: "B", logic: "Weakly suggested if dose ≥350 mg/kg or if given within 4h." }
+            { max_h: 2, rec: "Strong", grade: "B", logic: "Strong recommendation within 2h if dose ≥200 mg/kg or 10g." },
+            { max_h: 4, rec: "Weak", grade: "B", logic: "Weakly suggested between 2-4h if dose is ≥350 mg/kg." }
         ],
-        thresh: "≥200 mg/kg (2h) or ≥350 mg/kg (4h)",
+        thresh: "≥200 mg/kg (2h) | ≥350 mg/kg (4h)",
+        logic_over: "Not recommended beyond 4 hours for IR paracetamol as absorption is likely complete.",
         addDose: true
     },
     "carbamazepine": {
         name: "Carbamazepine",
         IR: { windows: [{ max_h: 2, rec: "Strong", grade: "C", logic: "Strong recommendation within 2h." }, { max_h: 6, rec: "Weak", grade: "C", logic: "Weakly suggested up to 6h." }] },
-        MR: { windows: [{ max_h: 4, rec: "Strong", grade: "C", logic: "Strongly suggested for MR formulations within 4h." }, { max_h: 12, rec: "Weak", grade: "C", logic: "Weakly suggested up to 12h for MR." }] },
+        MR: { windows: [{ max_h: 4, rec: "Strong", grade: "C", logic: "Strong recommendation for MR within 4h." }, { max_h: 12, rec: "Weak", grade: "C", logic: "Weakly suggested for MR up to 12h." }] },
         thresh: "≥25 mg/kg", mdac: true
     },
     "salicylates": {
         name: "Salicylates (Aspirin)",
-        IR: { windows: [{ max_h: 2, rec: "Strong", grade: "C", logic: "Strongly recommended within 2h." }, { max_h: 4, rec: "Weak", grade: "C", logic: "Suggested up to 4h (>300mg/kg) or 6h (>500mg/kg)." }] },
-        MR: { windows: [{ max_h: 4, rec: "Strong", grade: "C", logic: "Strongly recommended for MR within 4h." }, { max_h: 6, rec: "Weak", grade: "C", logic: "Suggested for MR up to 6h." }] },
+        IR: { windows: [{ max_h: 2, rec: "Strong", grade: "C", logic: "Strongly recommended within 2h if dose >150mg/kg." }, { max_h: 6, rec: "Weak", grade: "C", logic: "Weakly suggested up to 6h if massive ingestion (>500mg/kg)." }] },
+        MR: { windows: [{ max_h: 4, rec: "Strong", grade: "C", logic: "Strongly recommended for MR within 4h." }, { max_h: 12, rec: "Weak", grade: "C", logic: "Weakly suggested for MR up to 12h." }] },
         thresh: "≥150 mg/kg", mdac: true
     },
     "theophylline": {
@@ -136,23 +142,21 @@ const poisonsDb = {
     },
     "opioids": {
         name: "Opioids",
-        windows: [
-            { max_h: 1, rec: "Weak", grade: "D", logic: "Weakly suggested within 1h only if airway is secure." }
-        ],
+        windows: [{ max_h: 1, rec: "Weak", grade: "D", logic: "Weakly suggested within 1h only. Risk of aspiration often outweighs benefit." }],
         thresh: "Toxic dose",
-        logic_over: "Not recommended beyond 1 hour due to limited efficacy and aspiration risk."
+        logic_over: "NOT recommended beyond 1 hour. Opioids cause decreased GI motility, but AC benefit is not proven beyond the first hour."
     },
     "verapamil": {
         name: "Verapamil (CCB)",
         IR: { windows: [{ max_h: 1, rec: "Weak", grade: "D", logic: "Weak recommendation within 1h." }] },
-        MR: { windows: [{ max_h: 4, rec: "Strong", grade: "D", logic: "Strong recommendation for MR within 4h." }, { max_h: 6, rec: "Weak", grade: "D", logic: "Weakly suggested for MR up to 6h." }] },
+        MR: { windows: [{ max_h: 4, rec: "Strong", grade: "D", logic: "Strong recommendation for MR within 4h." }, { max_h: 12, rec: "Weak", grade: "D", logic: "Weakly suggested for MR up to 12h." }] },
         thresh: "Toxic dose"
     },
     "colchicine": {
         name: "Colchicine",
         windows: [
             { max_h: 2, rec: "Strong", grade: "D", logic: "Strong recommendation within 2h due to high lethality." },
-            { max_h: 6, rec: "Weak", grade: "D", logic: "Weak recommendation up to 6h." }
+            { max_h: 6, rec: "Weak", grade: "D", logic: "Weak recommendation up to 6h if very large dose." }
         ],
         thresh: "≥0.3 mg/kg"
     },
@@ -179,7 +183,7 @@ const poisonsDb = {
     "caustics": { name: "Caustics (Acids/Alkalis)", windows: [], logic_over: "Strongly recommended AGAINST. Risk of perforation and endoscopic interference.", grade: "D", rec: "No Role" }
 };
 
-// Populate the select list
+// Population
 const select = document.getElementById('drug_select');
 Object.keys(poisonsDb).sort((a,b) => poisonsDb[a].name.localeCompare(poisonsDb[b].name)).forEach(key => {
     const opt = document.createElement('option');
@@ -188,7 +192,6 @@ Object.keys(poisonsDb).sort((a,b) => poisonsDb[a].name.localeCompare(poisonsDb[b
     select.appendChild(opt);
 });
 
-// Update slider display
 const slider = document.getElementById('hours_range');
 slider.oninput = function() {
     document.getElementById('hours_display').textContent = parseFloat(this.value).toFixed(1) + " hours";
@@ -207,7 +210,6 @@ function calculateRecommendation() {
     resultArea.classList.remove('hidden');
     const drug = poisonsDb[drugKey];
     
-    // Determine the relevant configuration (IR vs MR vs flat)
     let configSet = drug;
     if (drug.IR || drug.MR) {
         configSet = (form === 'MR' && drug.MR) ? drug.MR : drug.IR;
@@ -222,7 +224,7 @@ function calculateRecommendation() {
     title.textContent = drug.name;
     notes.innerHTML = "";
 
-    // 1. Absolute Contraindications
+    // 1. SAFETY OVERRIDE
     if (!airway || !perforation) {
         card.style.borderColor = "#ef4444";
         strength.textContent = "ABSOLUTE CONTRAINDICATION";
@@ -231,7 +233,7 @@ function calculateRecommendation() {
         return;
     }
 
-    // 2. "No Role" Drugs
+    // 2. NO ROLE OVERRIDE
     if (drug.rec === "No Role") {
         card.style.borderColor = "#6b7280";
         strength.textContent = "RECOMMENDED AGAINST (NO ROLE)";
@@ -242,7 +244,7 @@ function calculateRecommendation() {
         return;
     }
 
-    // 3. Evaluate Windows
+    // 3. WINDOW EVALUATION
     const windows = configSet.windows || [];
     let activeWin = null;
     for (let win of windows) {
@@ -254,32 +256,32 @@ function calculateRecommendation() {
 
     if (activeWin) {
         if (activeWin.rec === "Strong") {
-            card.style.borderColor = "#10b981"; // Green
+            card.style.borderColor = "#10b981"; // GREEN
             strength.textContent = "STRONG RECOMMENDATION FOR AC";
             strength.className = "inline-block px-3 py-1 rounded text-sm font-bold mb-4 bg-green-100 text-green-700";
         } else {
-            card.style.borderColor = "#3b82f6"; // Blue
+            card.style.borderColor = "#3b82f6"; // BLUE
             strength.textContent = "WEAK RECOMMENDATION / RISK ASSESSMENT";
             strength.className = "inline-block px-3 py-1 rounded text-sm font-bold mb-4 bg-blue-100 text-blue-700";
         }
         logicEl.textContent = activeWin.logic;
         document.getElementById('res_grade').textContent = "Grade " + activeWin.grade;
     } else {
-        // Not Recommended (Out of window)
-        card.style.borderColor = "#f59e0b"; // Orange/Yellow
+        // NOT RECOMMENDED
+        card.style.borderColor = "#f59e0b"; // ORANGE/YELLOW
         strength.textContent = "NOT RECOMMENDED (OUT OF WINDOW)";
         strength.className = "inline-block px-3 py-1 rounded text-sm font-bold mb-4 bg-yellow-100 text-yellow-700";
-        logicEl.textContent = drug.logic_over || `Beyond the recommended timeframe for ${drug.name}. Benefit is likely minimal compared to risks.`;
+        logicEl.textContent = drug.logic_over || `Beyond the recommended timeframe for ${drug.name}. The risks of aspiration or complications generally outweigh the diminishing benefit of AC at this stage.`;
         document.getElementById('res_grade').textContent = "Grade D (Consensus)";
     }
 
     document.getElementById('res_threshold').textContent = drug.thresh || "Toxic dose suspected";
 
-    // Add MDAC/Additional Dose notes
-    if (drug.mdac) {
+    // 4. MDAC/ADDITIONAL NOTES
+    if (drug.mdac && hours <= (configSet.windows?.[configSet.windows.length-1]?.max_h || 0)) {
         const div = document.createElement('div');
         div.className = "p-3 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded text-sm";
-        div.innerHTML = "<strong>🔄 MDAC Candidate:</strong> Multiple-dose AC may be indicated to enhance elimination. Consult local protocols.";
+        div.innerHTML = "<strong>🔄 MDAC Candidate:</strong> Multiple-dose AC may be indicated for this substance to enhance elimination. Consult protocols.";
         notes.appendChild(div);
     }
 
