@@ -92,7 +92,7 @@
                 
                 <div id="special_notes" class="space-y-2"></div>
                 
-                <div class="grid grid-cols-2 gap-4 text-sm border-t pt-4">
+                <div id="footer_metadata" class="grid grid-cols-2 gap-4 text-sm border-t pt-4">
                     <div>
                         <span class="text-gray-500 block">Quality of Evidence</span>
                         <span id="res_grade" class="font-bold"></span>
@@ -240,10 +240,12 @@ function calculateRecommendation() {
     const logicEl = document.getElementById('res_logic');
     const doseEl = document.getElementById('dose_check_result');
     const notes = document.getElementById('special_notes');
+    const footer = document.getElementById('footer_metadata');
 
     title.textContent = `${drug.name} (${formType})`;
     notes.innerHTML = "";
     doseEl.classList.add('hidden');
+    footer.classList.add('hidden');
 
     if (!airway || !perforation) {
         card.style.borderColor = "#ef4444";
@@ -258,8 +260,6 @@ function calculateRecommendation() {
         strength.textContent = "RECOMMENDED AGAINST (NO ROLE)";
         strength.className = "inline-block px-3 py-1 rounded text-sm font-bold mb-4 bg-gray-200 text-gray-700";
         logicEl.textContent = configSet.logic_over;
-        document.getElementById('res_grade').textContent = "Grade " + (configSet.grade || "D");
-        document.getElementById('res_threshold').textContent = "N/A";
         return;
     }
 
@@ -280,58 +280,60 @@ function calculateRecommendation() {
         }
     }
 
-    // DOSE CHECK UI - Modified to account for window
-    if (!isNaN(doseRaw) && drug.val) {
-        doseEl.classList.remove('hidden');
-        if (!activeWin) {
-            // OUT OF WINDOW: Change wording to be neutral/informative
-            doseEl.className = "p-3 rounded border text-sm bg-gray-50 border-gray-200 text-gray-600";
-            doseEl.innerHTML = `ℹ️ <strong>Dose Note:</strong> Ingested dose (~${doseInMgKg.toFixed(1)} mg/kg) would normally meet threshold, but the <strong>time since ingestion exceeds the recommended window.</strong>`;
-        } else if (doseInMgKg >= drug.val) {
-            doseEl.className = "p-3 rounded border text-sm bg-green-50 border-green-200 text-green-800";
-            doseEl.innerHTML = `✅ <strong>Dose Check:</strong> Ingested dose (~${doseInMgKg.toFixed(1)} mg/kg) meets threshold for Strong Recommendation (${drug.val} mg/kg).`;
-        } else {
-            doseEl.className = "p-3 rounded border text-sm bg-yellow-50 border-yellow-200 text-yellow-800";
-            doseEl.innerHTML = `⚠️ <strong>Dose Check:</strong> Ingested dose (~${doseInMgKg.toFixed(1)} mg/kg) is below typical strong threshold (${drug.val} mg/kg). Recommendation remains ${activeWin.rec}.`;
-        }
-    }
-
     if (activeWin) {
+        // ONLY SHOW METADATA AND DOSE CHECKS IF IN WINDOW
         const isStrong = activeWin.rec === "Strong";
         card.style.borderColor = isStrong ? "#10b981" : "#3b82f6";
         strength.textContent = isStrong ? "STRONG RECOMMENDATION FOR AC" : "WEAK RECOMMENDATION / RISK ASSESSMENT";
         strength.className = `inline-block px-3 py-1 rounded text-sm font-bold mb-4 ${isStrong ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`;
         logicEl.textContent = activeWin.logic;
+        
+        // Show metadata footer
+        footer.classList.remove('hidden');
         document.getElementById('res_grade').textContent = "Grade " + activeWin.grade;
+        document.getElementById('res_threshold').textContent = drug.thresh || "Toxic dose";
+
+        // Dose Check UI
+        if (!isNaN(doseRaw) && drug.val) {
+            doseEl.classList.remove('hidden');
+            if (doseInMgKg >= drug.val) {
+                doseEl.className = "p-3 rounded border text-sm bg-green-50 border-green-200 text-green-800";
+                doseEl.innerHTML = `✅ <strong>Dose Check:</strong> Ingested dose (~${doseInMgKg.toFixed(1)} mg/kg) meets threshold for Strong Recommendation (${drug.val} mg/kg).`;
+            } else {
+                doseEl.className = "p-3 rounded border text-sm bg-yellow-50 border-yellow-200 text-yellow-800";
+                doseEl.innerHTML = `⚠️ <strong>Dose Check:</strong> Ingested dose (~${doseInMgKg.toFixed(1)} mg/kg) is below typical strong threshold (${drug.val} mg/kg). Recommendation remains ${activeWin.rec}.`;
+            }
+        }
+
+        // Additional Dose Logic
+        let showAddDose = false;
+        if (drug.addDose === true) showAddDose = true;
+        if (drug.addDose === "conditional" && (doseInMgKg >= 500 || (unit === 'g' && doseRaw >= 30))) showAddDose = true; 
+        if (formType === 'MR' && configSet.addDoseOverride) showAddDose = true; 
+
+        if (showAddDose && hours <= 12) {
+            const div = document.createElement('div');
+            div.className = "p-3 bg-blue-50 text-blue-800 border border-blue-200 rounded text-sm font-medium";
+            div.innerHTML = `📘 <strong>Table 4: Additional Dose Recommended:</strong> Consider an <u>additional single dose</u> of AC (approx 25g) if the first dose is tolerated, to manage ongoing absorption from the GI tract.`;
+            notes.appendChild(div);
+        }
+        
+        // MDAC Logic
+        if (drug.mdac && hours <= 12) {
+            const div = document.createElement('div');
+            div.className = "p-3 bg-purple-50 text-purple-800 border border-purple-200 rounded text-sm font-medium";
+            div.innerHTML = `🔄 <strong>Table 4: MDAC Recommended:</strong> This toxin is an established candidate for <u>Multiple-Dose Activated Charcoal</u> (repeated doses every 4h) to enhance systemic elimination.`;
+            notes.appendChild(div);
+        }
+
     } else {
+        // OUT OF WINDOW: Clean display
         card.style.borderColor = "#f59e0b"; 
         strength.textContent = "NOT RECOMMENDED (OUT OF WINDOW)";
         strength.className = "inline-block px-3 py-1 rounded text-sm font-bold mb-4 bg-yellow-100 text-yellow-700";
         logicEl.textContent = configSet.logic_over || `Beyond recommended timeframe. The evidence suggests that risks likely outweigh benefits after ${hours} hours for this formulation.`;
-        document.getElementById('res_grade').textContent = "Grade D (Consensus)";
-    }
-
-    document.getElementById('res_threshold').textContent = drug.thresh || "Toxic dose";
-
-    // Additional Dose Logic
-    let showAddDose = false;
-    if (drug.addDose === true) showAddDose = true;
-    if (drug.addDose === "conditional" && (doseInMgKg >= 500 || (unit === 'g' && doseRaw >= 30))) showAddDose = true; 
-    if (formType === 'MR' && configSet.addDoseOverride) showAddDose = true; 
-
-    if (showAddDose && hours <= 12) {
-        const div = document.createElement('div');
-        div.className = "p-3 bg-blue-50 text-blue-800 border border-blue-200 rounded text-sm font-medium";
-        div.innerHTML = `📘 <strong>Table 4: Additional Dose Recommended:</strong> Consider an <u>additional single dose</u> of AC (approx 25g) if the first dose is tolerated, to manage ongoing absorption from the GI tract.`;
-        notes.appendChild(div);
-    }
-    
-    // MDAC Logic
-    if (drug.mdac && hours <= 12) {
-        const div = document.createElement('div');
-        div.className = "p-3 bg-purple-50 text-purple-800 border border-purple-200 rounded text-sm font-medium";
-        div.innerHTML = `🔄 <strong>Table 4: MDAC Recommended:</strong> This toxin is an established candidate for <u>Multiple-Dose Activated Charcoal</u> (repeated doses every 4h) to enhance systemic elimination.`;
-        notes.appendChild(div);
+        
+        // Dose Check Result and Additional Notes are intentionally kept HIDDEN (via reset at top of function)
     }
 
     resultArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
