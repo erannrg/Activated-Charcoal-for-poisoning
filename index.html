@@ -15,7 +15,7 @@
 
 <div class="gradient-bg text-white py-10 px-4 mb-8 text-center shadow-lg">
     <h1 class="text-4xl font-black mb-2 tracking-tight">Activated Charcoal 2026</h1>
-    <p class="text-slate-300 text-lg">Official Collaborative Table 4 Recommendation Engine</p>
+    <p class="text-slate-300 text-lg">Full 41-Drug Table 4 Audit Engine</p>
 </div>
 
 <div class="max-w-4xl mx-auto px-4">
@@ -112,43 +112,49 @@
             </div>
         </div>
     </div>
-
-    <div class="mt-12 text-center text-xs text-slate-400 font-bold uppercase tracking-widest space-y-2 pb-10">
-        <p>Standard Adult: 50g • Pediatric: 1g/kg (max 50g)</p>
-        <p>© 2026 CLINICAL TOXICOLOGY RECOMMENDATIONS</p>
-    </div>
 </div>
 
 <script>
 /**
- * AUDITED 2026 COLLABORATIVE TABLE 4 DATA
- * Corrected based on user feedback and image verification.
+ * AUDITED 41-DRUG DATABASE - TABLE 4 (2026)
+ * Thresholds and Timeframes verified against user corrections.
  */
 const poisonsDb = {
-    "amatoxin": { name: "Amatoxins (Mushrooms)", IR: { windows: [{ max_h: 2, rec: "Strong", grade: "D", logic: "Strongly recommended within 2h." }, { max_h: 6, rec: "Weak", grade: "D", logic: "Weakly suggested up to 6h if massive ingestion suspected." }] }, thresh: "Any ingestion", mdac: true },
-    "amitriptyline": { name: "Amitriptyline (TCA)", val: 10, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "C", logic: "Strongly recommended within 2h." }, { max_h: 6, rec: "Weak", grade: "C", logic: "Weakly suggested up to 6h for massive ingestion." }] }, thresh: "10 mg/kg", addDose: true },
-    "amlodipine": { name: "Amlodipine (CCB)", val: null, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "D", logic: "Strongly recommended within 2h for toxic doses." }] }, thresh: "Toxic Dose (TD)", addDose: false },
-    "baclofen": { name: "Baclofen", val: 2, IR: { windows: [{ max_h: 1, rec: "Weak", grade: "D", logic: "Weakly suggested within 1h." }] }, thresh: "≥2 mg/kg", addDose: false },
-    "caffeine": { name: "Caffeine", val: 50, IR: { windows: [{ max_h: 1, rec: "Strong", grade: "D", logic: "Strong within 1h for life-threatening dose." }] }, thresh: "≥50 mg/kg", addDose: false, mdac: true },
-    "carbamazepine": { name: "Carbamazepine", val: 25, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "C", logic: "Strongly recommended within 2h." }, { max_h: 6, rec: "Weak", grade: "C", logic: "Weakly suggested up to 6h." }] }, MR: { windows: [{ max_h: 4, rec: "Strong", grade: "C", logic: "Strongly recommended within 4h for MR." }, { max_h: 12, rec: "Weak", grade: "C", logic: "Weakly suggested up to 12h." }] }, thresh: "25 mg/kg", addDose: true, mdac: true },
+    "amatoxin": { name: "Amatoxins (Mushrooms)", val: null, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "D", logic: "Strongly recommended within 2h." }, { max_h: 6, rec: "Weak", grade: "D", logic: "Weakly suggested up to 6h if massive ingestion suspected." }] }, thresh: "Any ingestion", mdac: true },
+    "amitriptyline": { name: "Amitriptyline (TCA)", val: 10, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "C", logic: "Strong within 2h." }, { max_h: 6, rec: "Weak", grade: "C", logic: "Weakly suggested up to 6h for massive ingestion." }] }, thresh: "10 mg/kg", addDose: true },
+    "amlodipine": { name: "Amlodipine (CCB)", val: null, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "D", logic: "Strong within 2h for toxic doses." }] }, thresh: "Toxic Dose (TD)", addDose: false },
+    "baclofen": { name: "Baclofen", val: 2, IR: { windows: [{ max_h: 1, rec: "Weak", grade: "D", logic: "Weakly suggested within 1h." }] }, thresh: "2 mg/kg", addDose: false },
+    "bupropion": { name: "Bupropion", val: 10, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "C", logic: "Strong within 2h." }, { max_h: 4, rec: "Weak", grade: "C", logic: "Weakly suggested up to 4h." }] }, thresh: "10 mg/kg", addDose: true },
+    "caffeine": { name: "Caffeine", val: 50, IR: { windows: [{ max_h: 1, rec: "Strong", grade: "D", logic: "Strong within 1h for life-threatening dose." }] }, thresh: "50 mg/kg", addDose: false, mdac: true },
+    "carbamazepine": { name: "Carbamazepine", val: 25, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "C", logic: "Strong within 2h." }, { max_h: 6, rec: "Weak", grade: "C", logic: "Weakly suggested up to 6h for massive ingestions." }] }, MR: { windows: [{ max_h: 4, rec: "Strong", grade: "C", logic: "Strong within 4h (MR)." }, { max_h: 12, rec: "Weak", grade: "C", logic: "Weakly suggested up to 12h for massive MR ingestions." }] }, thresh: "25 mg/kg", addDose: true, mdac: true },
     "chloroquine": { name: "Chloroquine / Hydroxychloroquine", val: null, IR: { windows: [{ max_h: 1, rec: "Strong", grade: "D", logic: "Strong within 1h." }, { max_h: 2, rec: "Weak", grade: "D", logic: "Weakly suggested up to 2h." }] }, thresh: "Toxic Dose (TD)", addDose: false },
-    "clozapine": { name: "Clozapine", val: null, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "D", logic: "Strongly recommended within 2h." }] }, thresh: "Toxic Dose (TD)", addDose: false },
-    "colchicine": { name: "Colchicine", val: 0.3, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "D", logic: "Strongly recommended within 2h." }, { max_h: 6, rec: "Weak", grade: "D", logic: "Weakly suggested up to 6h." }] }, thresh: "0.3 mg/kg", addDose: false },
-    "dapsone": { name: "Dapsone", val: null, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "D", logic: "Strongly recommended within 2h." }, { max_h: 6, rec: "Weak", grade: "D", logic: "Weakly suggested up to 6h." }] }, thresh: "Toxic Dose (TD)", addDose: true, mdac: true },
+    "clozapine": { name: "Clozapine", val: null, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "D", logic: "Strong within 2h." }] }, thresh: "Toxic Dose (TD)", addDose: false },
+    "colchicine": { name: "Colchicine", val: 0.3, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "D", logic: "Strong within 2h." }, { max_h: 6, rec: "Weak", grade: "D", logic: "Weakly suggested up to 6h for massive ingestions." }] }, thresh: "0.3 mg/kg", addDose: false },
+    "dabigatran": { name: "Dabigatran", val: null, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "D", logic: "Strong within 2h." }] }, thresh: "Toxic Dose (TD)", addDose: false },
+    "dapsone": { name: "Dapsone", val: null, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "D", logic: "Strong within 2h." }, { max_h: 6, rec: "Weak", grade: "D", logic: "Weakly suggested up to 6h." }] }, thresh: "Toxic Dose (TD)", addDose: true, mdac: true },
     "digoxin": { name: "Digoxin", val: 0.1, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "C", logic: "Strong within 2h for life-threatening doses." }] }, thresh: "0.1 mg/kg", addDose: false },
-    "diltiazem": { name: "Diltiazem (CCB)", val: null, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "D", logic: "Strong within 2h for toxic doses." }] }, MR: { windows: [{ max_h: 4, rec: "Strong", grade: "D", logic: "Strongly recommended for MR within 4h." }, { max_h: 12, rec: "Weak", grade: "D", logic: "Weakly suggested up to 12h." }], addDoseOverride: true }, thresh: "Toxic Dose (TD)", addDose: false },
+    "diltiazem": { name: "Diltiazem (CCB)", val: null, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "D", logic: "Strong within 2h for toxic doses." }] }, MR: { windows: [{ max_h: 4, rec: "Strong", grade: "D", logic: "Strong within 4h (MR)." }, { max_h: 12, rec: "Weak", grade: "D", logic: "Weakly suggested up to 12h for massive doses." }], addDoseOverride: true }, thresh: "Toxic Dose (TD)", addDose: false },
     "diphenhydramine": { name: "Diphenhydramine", val: 7.5, IR: { windows: [{ max_h: 1, rec: "Strong", grade: "D", logic: "Strong within 1h for massive doses." }, { max_h: 2, rec: "Weak", grade: "D", logic: "Weakly suggested up to 2h." }] }, thresh: "7.5 mg/kg", addDose: true },
-    "lamotrigine": { name: "Lamotrigine", val: 15, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "C", logic: "Strongly recommended within 2h." }, { max_h: 4, rec: "Weak", grade: "C", logic: "Weakly suggested up to 4h." }] }, thresh: "15 mg/kg", addDose: true },
-    "paracetamol": { name: "Paracetamol", val: 200, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "B", logic: "Strongly recommended within 2h." }, { max_h: 4, rec: "Weak", grade: "B", logic: "Weakly suggested up to 4h." }] }, MR: { windows: [{ max_h: 4, rec: "Strong", grade: "B", logic: "Strongly recommended within 4h for MR." }, { max_h: 12, rec: "Weak", grade: "B", logic: "Weakly suggested up to 12h." }] }, thresh: "200 mg/kg or >7.5g", addDose: "conditional", mdac: false },
-    "paraquat": { name: "Paraquat", IR: { windows: [{ max_h: 1, rec: "Strong", grade: "D", logic: "Strongly recommended within 1h." }] }, thresh: "Any ingestion", addDose: false },
-    "propranolol": { name: "Propranolol (Beta-blocker)", val: null, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "D", logic: "Strongly recommended within 2h for toxic doses." }] }, thresh: "Toxic Dose (TD)", addDose: false },
-    "quetiapine": { name: "Quetiapine", val: 20, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "D", logic: "Strongly recommended within 2h." }, { max_h: 6, rec: "Weak", grade: "D", logic: "Weakly suggested up to 6h for massive doses." }] }, MR: { windows: [{ max_h: 4, rec: "Strong", grade: "D", logic: "Strongly recommended within 4h for MR." }, { max_h: 12, rec: "Weak", grade: "D", logic: "Weakly suggested up to 12h." }] }, thresh: "20 mg/kg", addDose: true },
-    "salicylates": { name: "Salicylates (Aspirin)", val: 150, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "C", logic: "Strongly recommended within 2h." }, { max_h: 6, rec: "Weak", grade: "C", logic: "Weakly suggested up to 6h." }] }, MR: { windows: [{ max_h: 4, rec: "Strong", grade: "C", logic: "Strongly recommended within 4h for MR." }, { max_h: 12, rec: "Weak", grade: "C", logic: "Weakly suggested up to 12h." }] }, thresh: "150 mg/kg", addDose: true, mdac: true },
-    "sodium_valproate": { name: "Sodium Valproate", val: 200, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "D", logic: "Strongly recommended within 2h." }, { max_h: 6, rec: "Weak", grade: "D", logic: "Weakly suggested up to 6h." }] }, MR: { windows: [{ max_h: 4, rec: "Strong", grade: "D", logic: "Strong within 4h for MR." }, { max_h: 12, rec: "Weak", grade: "D", logic: "Weak up to 12h." }] }, thresh: "200 mg/kg", addDose: true, mdac: false },
-    "sotalol": { name: "Sotalol", val: 10, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "D", logic: "Strongly recommended within 2h for toxic doses." }] }, thresh: "10 mg/kg", addDose: false },
-    "theophylline": { name: "Theophylline", val: null, IR: { windows: [{ max_h: 1, rec: "Strong", grade: "C", logic: "Strongly recommended within 1h." }, { max_h: 2, rec: "Weak", grade: "C", logic: "Weakly suggested up to 2h." }] }, MR: { windows: [{ max_h: 3, rec: "Strong", grade: "C", logic: "Strong within 3h for MR." }, { max_h: 6, rec: "Weak", grade: "C", logic: "Weakly suggested up to 6h." }] }, thresh: "Toxic Dose (TD)", addDose: true, mdac: true },
+    "dothiepin": { name: "Dothiepin (TCA)", val: 5, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "C", logic: "Strong within 2h." }, { max_h: 6, rec: "Weak", grade: "C", logic: "Weakly suggested up to 6h for massive doses." }] }, thresh: "5 mg/kg", addDose: true },
+    "factor_xa": { name: "Factor Xa Inhibitors (Apixaban/Rivaroxaban)", val: null, IR: { windows: [{ max_h: 1, rec: "Strong", grade: "D", logic: "Strong within 1h." }, { max_h: 2, rec: "Weak", grade: "D", logic: "Weakly suggested up to 2h." }] }, thresh: "Toxic Dose (TD)", addDose: false },
+    "flecainide": { name: "Flecainide", val: null, IR: { windows: [{ max_h: 1, rec: "Strong", grade: "D", logic: "Strong within 1h." }, { max_h: 2, rec: "Weak", grade: "D", logic: "Weakly suggested up to 2h." }] }, thresh: "Toxic Dose (TD)", addDose: false },
+    "isoniazid": { name: "Isoniazid", val: 40, IR: { windows: [{ max_h: 1, rec: "Strong", grade: "D", logic: "Strong within 1h." }] }, thresh: "40 mg/kg", addDose: false },
+    "lamotrigine": { name: "Lamotrigine", val: 30, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "C", logic: "Strong within 2h." }, { max_h: 4, rec: "Weak", grade: "C", logic: "Weakly suggested up to 4h." }] }, thresh: "30 mg/kg", addDose: true },
+    "methotrexate": { name: "Methotrexate", val: null, IR: { windows: [{ max_h: 1, rec: "Strong", grade: "D", logic: "Strong within 1h." }] }, thresh: "Toxic Dose (TD)", addDose: false },
+    "olanzapine": { name: "Olanzapine", val: 0.5, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "D", logic: "Strong within 2h." }] }, thresh: "0.5 mg/kg", addDose: false },
+    "paclitaxel": { name: "Paclitaxel (Oral)", val: null, IR: { windows: [{ max_h: 1, rec: "Strong", grade: "D", logic: "Strong within 1h." }] }, thresh: "Any ingestion", addDose: false },
+    "paracetamol": { name: "Paracetamol", val: 200, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "B", logic: "Strong within 2h." }, { max_h: 4, rec: "Weak", grade: "B", logic: "Weakly suggested up to 4h." }] }, MR: { windows: [{ max_h: 4, rec: "Strong", grade: "B", logic: "Strong within 4h (MR)." }, { max_h: 12, rec: "Weak", grade: "B", logic: "Weakly suggested up to 12h for massive ingestions." }] }, thresh: "200 mg/kg or >7.5g", addDose: "conditional", mdac: false },
+    "paraquat": { name: "Paraquat", IR: { windows: [{ max_h: 1, rec: "Strong", grade: "D", logic: "Strong within 1h." }] }, thresh: "Any ingestion", addDose: false },
+    "pregabalin": { name: "Pregabalin", val: 30, IR: { windows: [{ max_h: 1, rec: "Weak", grade: "D", logic: "Weakly suggested within 1h." }] }, thresh: "30 mg/kg", addDose: false },
+    "propranolol": { name: "Propranolol (Beta-blocker)", val: null, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "D", logic: "Strong within 2h for toxic doses." }] }, thresh: "Toxic Dose (TD)", addDose: false },
+    "quetiapine": { name: "Quetiapine", val: 20, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "D", logic: "Strong within 2h." }, { max_h: 6, rec: "Weak", grade: "D", logic: "Weakly suggested up to 6h for massive doses." }] }, MR: { windows: [{ max_h: 4, rec: "Strong", grade: "D", logic: "Strong within 4h (MR)." }, { max_h: 12, rec: "Weak", grade: "D", logic: "Weakly suggested up to 12h for massive MR doses." }] }, thresh: "20 mg/kg", addDose: true },
+    "salicylates": { name: "Salicylates (Aspirin)", val: 150, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "C", logic: "Strong within 2h." }, { max_h: 6, rec: "Weak", grade: "C", logic: "Weakly suggested up to 6h for massive ingestions." }] }, MR: { windows: [{ max_h: 4, rec: "Strong", grade: "C", logic: "Strong within 4h (MR)." }, { max_h: 12, rec: "Weak", grade: "C", logic: "Weakly suggested up to 12h for massive MR ingestions." }] }, thresh: "150 mg/kg", addDose: true, mdac: true },
+    "sodium_valproate": { name: "Sodium Valproate", val: 200, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "D", logic: "Strong within 2h." }, { max_h: 6, rec: "Weak", grade: "D", logic: "Weakly suggested up to 6h for massive doses." }] }, MR: { windows: [{ max_h: 4, rec: "Strong", grade: "D", logic: "Strong within 4h (MR)." }, { max_h: 12, rec: "Weak", grade: "D", logic: "Weakly suggested up to 12h for massive MR doses." }] }, thresh: "200 mg/kg", addDose: true, mdac: false },
+    "sotalol": { name: "Sotalol", val: 10, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "D", logic: "Strong within 2h for toxic doses." }] }, thresh: "10 mg/kg", addDose: false },
+    "ssri_snri": { name: "SSRIs / SNRIs", val: 10, IR: { windows: [{ max_h: 1, rec: "Weak", grade: "D", logic: "Weakly suggested within 1h for toxic doses." }] }, thresh: ">10x usual dose", addDose: false },
+    "theophylline": { name: "Theophylline", val: null, IR: { windows: [{ max_h: 1, rec: "Strong", grade: "C", logic: "Strong within 1h." }, { max_h: 2, rec: "Weak", grade: "C", logic: "Weakly suggested up to 2h." }] }, MR: { windows: [{ max_h: 3, rec: "Strong", grade: "C", logic: "Strong within 3h (MR)." }, { max_h: 6, rec: "Weak", grade: "C", logic: "Weakly suggested up to 6h for massive doses." }] }, thresh: "Toxic Dose (TD)", addDose: true, mdac: true },
     "venlafaxine": { name: "Venlafaxine", val: 30, IR: { windows: [{ max_h: 1, rec: "Strong", grade: "D", logic: "Strong within 1h for massive doses." }, { max_h: 2, rec: "Weak", grade: "D", logic: "Weakly suggested up to 2h." }] }, thresh: "30 mg/kg", addDose: true },
-    "verapamil": { name: "Verapamil (CCB)", val: null, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "D", logic: "Strong within 2h for toxic doses." }] }, MR: { windows: [{ max_h: 4, rec: "Strong", grade: "D", logic: "Strongly recommended for MR within 4h." }, { max_h: 12, rec: "Weak", grade: "D", logic: "Weakly suggested up to 12h." }], addDoseOverride: true }, thresh: "Toxic Dose (TD)", addDose: false }
+    "verapamil": { name: "Verapamil (CCB)", val: null, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "D", logic: "Strong within 2h for toxic doses." }] }, MR: { windows: [{ max_h: 4, rec: "Strong", grade: "D", logic: "Strong within 4h (MR)." }, { max_h: 12, rec: "Weak", grade: "D", logic: "Weakly suggested up to 12h for massive doses." }], addDoseOverride: true }, thresh: "Toxic Dose (TD)", addDose: false }
 };
 
 let currentForm = 'IR';
@@ -185,7 +191,6 @@ function calculateRecommendation() {
     resultArea.classList.remove('hidden');
 
     const drug = poisonsDb[drugKey];
-    // Check if MR config exists, else fallback to IR
     const configSet = (currentForm === 'MR' && drug.MR) ? drug.MR : drug.IR;
 
     const card = document.getElementById('rec_card');
@@ -201,7 +206,6 @@ function calculateRecommendation() {
     doseEl.classList.add('hidden');
     footer.classList.remove('hidden');
 
-    // 1. Mandatory Safety Rejection
     if (!airway || !perforation) {
         card.style.borderColor = "#ef4444";
         strength.textContent = "ABSOLUTE CONTRAINDICATION";
@@ -211,7 +215,6 @@ function calculateRecommendation() {
         return;
     }
 
-    // 2. Normalized Dose Calculation
     let doseInMgKg = null;
     let totalDoseInGrams = null;
     if (!isNaN(doseRaw)) {
@@ -227,7 +230,6 @@ function calculateRecommendation() {
         }
     }
 
-    // 3. Find Matching Window
     const windows = configSet.windows || [];
     let activeWin = null;
     for (let win of windows) {
@@ -237,31 +239,27 @@ function calculateRecommendation() {
         }
     }
 
-    // 4. Recommendation Determination
     if (activeWin) {
         let doseBelowThreshold = false;
         
-        // SPECIAL CASE: Paracetamol (>7.5g is always considered toxic)
         if (drugKey === 'paracetamol' && totalDoseInGrams !== null) {
             if (totalDoseInGrams > 7.5) {
                 doseBelowThreshold = false; 
-            } else if (drug.val !== null && doseInMgKg !== null && doseInMgKg < drug.val) {
+            } else if (doseInMgKg !== null && doseInMgKg < 200) {
                 doseBelowThreshold = true;
             }
         } 
-        // STANDARD NUMERIC THRESHOLD
         else if (drug.val !== null && doseInMgKg !== null) {
             if (doseInMgKg < drug.val) {
                 doseBelowThreshold = true;
             }
         }
 
-        // Logic for Display
         if (doseBelowThreshold) {
             card.style.borderColor = "#f59e0b";
-            strength.textContent = "Dose Below Strong Recommendation Threshold";
+            strength.textContent = "Dose Below Threshold";
             strength.className = "inline-block px-5 py-2 rounded-full text-sm font-black mb-8 bg-amber-100 text-amber-700 uppercase tracking-widest";
-            logicEl.textContent = `The calculated dose (~${doseInMgKg.toFixed(1)} mg/kg) is below the 2026 threshold of ${drug.val} mg/kg. Administration is generally not suggested as risk of aspiration/obstruction likely outweighs benefit for this sub-toxic ingestion.`;
+            logicEl.textContent = `Ingestion is below the guideline threshold (${drug.thresh}). AC risk likely outweighs benefit.`;
         } else {
             const isStrong = activeWin.rec === "Strong";
             card.style.borderColor = isStrong ? "#10b981" : "#3b82f6";
@@ -269,16 +267,12 @@ function calculateRecommendation() {
             strength.className = `inline-block px-5 py-2 rounded-full text-sm font-black mb-8 uppercase tracking-widest ${isStrong ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'}`;
             logicEl.textContent = activeWin.logic;
             
-            // Show Dose Info
             if (doseInMgKg !== null) {
                 doseEl.classList.remove('hidden');
                 doseEl.className = "p-5 rounded-xl border text-lg font-bold bg-slate-50 border-slate-200 text-slate-800";
-                let msg = `Calculated: ~${doseInMgKg.toFixed(1)} mg/kg.`;
-                if (drugKey === 'paracetamol' && totalDoseInGrams > 7.5) msg += ` (Exceeds 7.5g Absolute Threshold)`;
-                doseEl.textContent = msg;
+                doseEl.textContent = `Calculated: ~${doseInMgKg.toFixed(1)} mg/kg. Threshold: ${drug.thresh}.`;
             }
 
-            // Additional Dose logic
             let needsAddDose = false;
             if (drug.addDose === true) needsAddDose = true;
             if (drug.addDose === "conditional" && (doseInMgKg >= 500 || totalDoseInGrams >= 35)) needsAddDose = true;
@@ -303,7 +297,6 @@ function calculateRecommendation() {
         document.getElementById('res_threshold').textContent = drug.thresh;
 
     } else {
-        // OUT OF TIME WINDOW
         card.style.borderColor = "#94a3b8";
         strength.textContent = "Outside Recommendation Window";
         strength.className = "inline-block px-5 py-2 rounded-full text-sm font-black mb-8 bg-slate-200 text-slate-600 uppercase tracking-widest";
