@@ -54,9 +54,17 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
             <div class="md:col-span-2">
                 <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Target Substance</label>
-                <select id="toxin" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold text-xl focus:ring-4 focus:ring-slate-200 outline-none transition-all cursor-pointer">
+                <select id="toxin" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold text-xl focus:ring-4 focus:ring-slate-200 outline-none transition-all cursor-pointer" onchange="toggleFormulation()">
                     <option value="">Choose drug...</option>
                 </select>
+            </div>
+
+            <div id="formulation_container" class="hidden md:col-span-2">
+                <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Formulation Type</label>
+                <div class="flex bg-slate-100 p-1 rounded-2xl">
+                    <button onclick="setFormulation('IR')" id="btn_IR" class="flex-1 py-3 px-2 rounded-xl font-black text-sm transition-all bg-white shadow-sm">Immediate Release (IR)</button>
+                    <button onclick="setFormulation('MR')" id="btn_MR" class="flex-1 py-3 px-2 rounded-xl font-black text-sm text-slate-500 transition-all">Modified Release (MR/SR/ER)</button>
+                </div>
             </div>
 
             <div>
@@ -126,44 +134,67 @@
 </div>
 
 <script>
-// FULL 41-DRUG DATABASE - MANUALLY VERIFIED
+// FULL 41-DRUG DATABASE + EXCLUSIONS
 const DB = {
+    "alcohols": { name: "Alcohols (Ethanol/Methanol/EG)", thresh: 0, unit: "any", no_ac: true, text: "AC is NOT recommended as alcohols are poorly adsorbed by charcoal." },
     "amatoxin": { name: "Amatoxins (Mushrooms)", thresh: 0, unit: "any", ir_s: 2, ir_w: 6, mdac: true, grade: "D" },
     "amitriptyline": { name: "Amitriptyline (TCA)", thresh: 10, unit: "mg/kg", ir_s: 2, ir_w: 6, add_d: true, grade: "C" },
     "amlodipine": { name: "Amlodipine (CCB)", thresh: 0, unit: "toxic", ir_s: 2, grade: "D" },
     "baclofen": { name: "Baclofen", thresh: 2, unit: "mg/kg", ir_s: 1, grade: "D", weak_only: true },
     "bupropion": { name: "Bupropion", thresh: 10, unit: "mg/kg", ir_s: 2, ir_w: 4, add_d: true, grade: "C" },
     "caffeine": { name: "Caffeine", thresh: 50, unit: "mg/kg", ir_s: 1, mdac: true, grade: "D" },
-    "carbamazepine": { name: "Carbamazepine", thresh: 25, unit: "mg/kg", ir_s: 2, ir_w: 6, mr_s: 4, mr_w: 12, add_d: true, mdac: true, grade: "C" },
+    "carbamazepine": { name: "Carbamazepine", thresh: 25, unit: "mg/kg", ir_s: 2, ir_w: 6, mr_s: 4, mr_w: 12, add_d: true, mdac: true, grade: "C", has_mr: true },
     "chloroquine": { name: "Chloroquine / HCQ", thresh: 0, unit: "toxic", ir_s: 1, ir_w: 2, grade: "D" },
     "clozapine": { name: "Clozapine", thresh: 0, unit: "toxic", ir_s: 2, grade: "D" },
     "colchicine": { name: "Colchicine", thresh: 0.3, unit: "mg/kg", ir_s: 2, ir_w: 6, grade: "D" },
     "dabigatran": { name: "Dabigatran", thresh: 0, unit: "toxic", ir_s: 2, grade: "D" },
     "dapsone": { name: "Dapsone", thresh: 0, unit: "toxic", ir_s: 2, ir_w: 6, add_d: true, mdac: true, grade: "D" },
     "digoxin": { name: "Digoxin", thresh: 0.1, unit: "mg/kg", ir_s: 2, grade: "C" },
-    "diltiazem": { name: "Diltiazem", thresh: 0, unit: "toxic", ir_s: 2, mr_s: 4, mr_w: 12, add_d_mr: true, grade: "D" },
+    "diltiazem": { name: "Diltiazem", thresh: 0, unit: "toxic", ir_s: 2, mr_s: 4, mr_w: 12, add_d_mr: true, grade: "D", has_mr: true },
     "diphenhydramine": { name: "Diphenhydramine", thresh: 7.5, unit: "mg/kg", ir_s: 1, ir_w: 2, add_d: true, grade: "D" },
     "dothiepin": { name: "Dothiepin (TCA)", thresh: 5, unit: "mg/kg", ir_s: 2, ir_w: 6, add_d: true, grade: "C" },
-    "factor_xa": { name: "Factor Xa Inhibitors", thresh: 0, unit: "toxic", ir_s: 1, ir_w: 2, grade: "D" }, // FIXED 1h/2h
+    "factor_xa": { name: "Factor Xa Inhibitors", thresh: 0, unit: "toxic", ir_s: 1, ir_w: 2, grade: "D" },
     "flecainide": { name: "Flecainide", thresh: 0, unit: "toxic", ir_s: 1, ir_w: 2, grade: "D" },
-    "isoniazid": { name: "Isoniazid", thresh: 40, unit: "mg/kg", ir_s: 1, grade: "D" }, // FIXED 40mg/kg
-    "lamotrigine": { name: "Lamotrigine", thresh: 30, unit: "mg/kg", ir_s: 2, ir_w: 4, add_d: true, grade: "C" }, // FIXED 30mg/kg
+    "iron": { name: "Iron", thresh: 0, unit: "any", no_ac: true, text: "AC is NOT recommended for iron ingestions as charcoal does not bind metals." },
+    "isoniazid": { name: "Isoniazid", thresh: 40, unit: "mg/kg", ir_s: 1, grade: "D" },
+    "lamotrigine": { name: "Lamotrigine", thresh: 30, unit: "mg/kg", ir_s: 2, ir_w: 4, add_d: true, grade: "C" },
+    "lithium": { name: "Lithium", thresh: 0, unit: "any", no_ac: true, text: "AC is NOT recommended for lithium ingestions as charcoal does not bind metals." },
+    "metformin": { name: "Metformin", thresh: 0, unit: "any", no_ac: true, text: "AC is NOT recommended for metformin ingestions." },
     "methotrexate": { name: "Methotrexate", thresh: 0, unit: "toxic", ir_s: 1, grade: "D" },
     "olanzapine": { name: "Olanzapine", thresh: 0.5, unit: "mg/kg", ir_s: 2, grade: "D" },
     "paclitaxel": { name: "Paclitaxel (Oral)", thresh: 0, unit: "any", ir_s: 1, grade: "D" },
-    "paracetamol": { name: "Paracetamol", thresh: 200, unit: "mg/kg", ir_s: 2, ir_w: 4, mr_s: 4, mr_w: 12, add_d_cond: true, grade: "B" }, // SPECIAL LOGIC
+    "paracetamol": { name: "Paracetamol", thresh: 200, unit: "mg/kg", ir_s: 2, ir_w: 4, mr_s: 4, mr_w: 12, add_d_cond: true, grade: "B", has_mr: true },
     "paraquat": { name: "Paraquat", thresh: 0, unit: "any", ir_s: 1, grade: "D" },
     "pregabalin": { name: "Pregabalin", thresh: 30, unit: "mg/kg", ir_s: 1, grade: "D", weak_only: true },
     "propranolol": { name: "Propranolol", thresh: 0, unit: "toxic", ir_s: 2, grade: "D" },
-    "quetiapine": { name: "Quetiapine", thresh: 20, unit: "mg/kg", ir_s: 2, ir_w: 6, mr_s: 4, mr_w: 12, add_d: true, grade: "D" },
-    "salicylates": { name: "Salicylates", thresh: 150, unit: "mg/kg", ir_s: 2, ir_w: 6, mr_s: 4, mr_w: 12, add_d: true, mdac: true, grade: "C" },
-    "sodium_valproate": { name: "Sodium Valproate", thresh: 200, unit: "mg/kg", ir_s: 2, ir_w: 6, mr_s: 4, mr_w: 12, add_d: true, grade: "D" },
+    "quetiapine": { name: "Quetiapine", thresh: 20, unit: "mg/kg", ir_s: 2, ir_w: 6, mr_s: 4, mr_w: 12, add_d: true, grade: "D", has_mr: true },
+    "salicylates": { name: "Salicylates", thresh: 150, unit: "mg/kg", ir_s: 2, ir_w: 6, mr_s: 4, mr_w: 12, add_d: true, mdac: true, grade: "C", has_mr: true },
+    "sodium_valproate": { name: "Sodium Valproate", thresh: 200, unit: "mg/kg", ir_s: 2, ir_w: 6, mr_s: 4, mr_w: 12, add_d: true, grade: "D", has_mr: true },
     "sotalol": { name: "Sotalol", thresh: 10, unit: "mg/kg", ir_s: 2, grade: "D" },
     "ssri_snri": { name: "SSRIs / SNRIs", thresh: 10, unit: "x_dose", ir_s: 1, grade: "D", weak_only: true },
-    "theophylline": { name: "Theophylline", thresh: 0, unit: "toxic", ir_s: 1, ir_w: 2, mr_s: 3, mr_w: 6, add_d: true, mdac: true, grade: "C" },
+    "theophylline": { name: "Theophylline", thresh: 0, unit: "toxic", ir_s: 1, ir_w: 2, mr_s: 3, mr_w: 6, add_d: true, mdac: true, grade: "C", has_mr: true },
     "venlafaxine": { name: "Venlafaxine", thresh: 30, unit: "mg/kg", ir_s: 1, ir_w: 2, add_d: true, grade: "D" },
-    "verapamil": { name: "Verapamil", thresh: 0, unit: "toxic", ir_s: 2, mr_s: 4, mr_w: 12, add_d_mr: true, grade: "D" }
+    "verapamil": { name: "Verapamil", thresh: 0, unit: "toxic", ir_s: 2, mr_s: 4, mr_w: 12, add_d_mr: true, grade: "D", has_mr: true }
 };
+
+let currentFormulation = 'IR';
+
+function toggleFormulation() {
+    const key = document.getElementById('toxin').value;
+    const container = document.getElementById('formulation_container');
+    if (DB[key] && DB[key].has_mr) {
+        container.classList.remove('hidden');
+    } else {
+        container.classList.add('hidden');
+        setFormulation('IR');
+    }
+}
+
+function setFormulation(f) {
+    currentFormulation = f;
+    document.getElementById('btn_IR').className = f === 'IR' ? 'flex-1 py-3 px-2 rounded-xl font-black text-sm transition-all bg-white shadow-sm' : 'flex-1 py-3 px-2 rounded-xl font-black text-sm text-slate-500 transition-all';
+    document.getElementById('btn_MR').className = f === 'MR' ? 'flex-1 py-3 px-2 rounded-xl font-black text-sm transition-all bg-white shadow-sm' : 'flex-1 py-3 px-2 rounded-xl font-black text-sm text-slate-500 transition-all';
+}
 
 const select = document.getElementById('toxin');
 Object.keys(DB).sort().forEach(k => {
@@ -196,7 +227,7 @@ function runAudit() {
     notes.innerHTML = "";
 
     document.getElementById('res_name').textContent = drug.name;
-    document.getElementById('meta_grade').textContent = drug.grade;
+    document.getElementById('meta_grade').textContent = drug.grade || "N/A";
     
     // Dose Calculation
     let doseMgKg = 0;
@@ -221,7 +252,17 @@ function runAudit() {
         return;
     }
 
-    // Special Paracetamol Threshold (7.5g absolute OR 200mg/kg)
+    // Exclusion Drugs (Iron, Lithium, etc.)
+    if (drug.no_ac) {
+        frame.style.borderColor = "#94a3b8";
+        badge.className = "px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest bg-slate-100 text-slate-700";
+        badge.textContent = "Not Recommended";
+        document.getElementById('res_text').textContent = drug.text;
+        document.getElementById('meta_thresh').textContent = "N/A";
+        return;
+    }
+
+    // Threshold Check
     let isBelowThreshold = false;
     if (key === 'paracetamol') {
         isBelowThreshold = (doseMgKg < 200 && totalGrams < 7.5);
@@ -230,33 +271,37 @@ function runAudit() {
         isBelowThreshold = (doseMgKg < drug.thresh);
         document.getElementById('meta_thresh').textContent = `${drug.thresh} mg/kg`;
     } else {
-        document.getElementById('meta_thresh').textContent = drug.unit === "any" ? "Any amount" : "Toxic Dose";
+        document.getElementById('meta_thresh').textContent = "Toxic Dose";
     }
 
-    if (isBelowThreshold && drug.thresh > 0) {
+    if (isBelowThreshold) {
         frame.style.borderColor = "#f59e0b";
         badge.className = "px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest bg-amber-100 text-amber-700";
         badge.textContent = "Below Threshold";
-        document.getElementById('res_text').textContent = `Dose (${doseMgKg.toFixed(1)} mg/kg) is below the clinical threshold. AC is not recommended.`;
+        document.getElementById('res_text').textContent = `Dose (${doseMgKg.toFixed(1)} mg/kg) is below the guideline threshold. AC is not recommended.`;
         return;
     }
 
-    // Recommendation Logic
+    // Recommendation Logic (Split by Formulation)
     let recType = "None";
     let color = "#94a3b8";
     let text = "Outside clinical window for AC administration.";
 
-    // Strong Rec
-    if (hours <= drug.ir_s && !drug.weak_only) {
+    const sLimit = currentFormulation === 'MR' ? drug.mr_s : drug.ir_s;
+    const wLimit = currentFormulation === 'MR' ? drug.mr_w : drug.ir_w;
+
+    if (hours <= sLimit && !drug.weak_only) {
         recType = "Strong";
         color = "#10b981";
-        text = `Strongly recommended within ${drug.ir_s}h window for toxic ingestions.`;
-    } 
-    // Weak Rec (IR extension or drug specific)
-    else if ((drug.ir_w && hours <= drug.ir_w) || (drug.weak_only && hours <= drug.ir_s)) {
+        text = `Strongly recommended within ${sLimit}h window for ${currentFormulation} toxic ingestions.`;
+    } else if (wLimit && hours <= wLimit) {
         recType = "Weak";
         color = "#3b82f6";
-        text = `Weakly suggested. Patient is within the extended window, but efficacy significantly decreases after 1-2 hours.`;
+        text = `Weakly suggested. Patient is within the extended ${currentFormulation} window (${wLimit}h).`;
+    } else if (drug.weak_only && hours <= sLimit) {
+        recType = "Weak";
+        color = "#3b82f6";
+        text = `Weakly suggested for this substance within ${sLimit}h.`;
     }
 
     frame.style.borderColor = color;
@@ -264,16 +309,13 @@ function runAudit() {
     badge.className = `px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest ${recType === 'Strong' ? 'bg-emerald-100 text-emerald-700' : (recType === 'Weak' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-700')}`;
     document.getElementById('res_text').textContent = text;
 
-    // Special Indicators
+    // Additional Notes
     if (recType !== "None") {
         if (drug.add_d === true || (drug.add_d_cond && (doseMgKg >= 500 || totalGrams >= 35))) {
             addNote("💡 CONSIDER ADDITIONAL DOSE: Ingestion magnitude suggests a second dose (approx 25g) if tolerated.", "indigo");
         }
         if (drug.mdac) {
             addNote("🔄 MDAC ELIGIBLE: Consider Multiple-Dose Activated Charcoal for this substance.", "violet");
-        }
-        if (drug.mr_s) {
-            addNote(`📦 MR/SR NOTE: If Modified Release, Strong Rec extends to ${drug.mr_s}h and Weak Rec to ${drug.mr_w}h.`, "blue");
         }
     }
 
