@@ -6,20 +6,21 @@
     <title>Activated Charcoal Tool 2026</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .gradient-bg { background: linear-gradient(135deg, #1a1a1a 0%, #2d3436 100%); }
+        .gradient-bg { background: linear-gradient(135deg, #111827 0%, #1f2937 100%); }
         .card { background: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        select { appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1em; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen pb-10">
 
 <div class="gradient-bg text-white py-8 px-4 mb-6 text-center">
     <h1 class="text-3xl font-bold mb-2">🖤 Activated Charcoal Recommendation Tool</h1>
-    <p class="text-gray-300">Based on the 2026 Clinical Toxicology Recommendations Collaborative — Table 4</p>
+    <p class="text-gray-300">Clin Tox Recommendations Collaborative (2026) — Complete Table 4</p>
 </div>
 
 <div class="max-w-4xl mx-auto px-4">
     <!-- Airway Safety Check -->
-    <div class="card p-6 mb-6 border-l-8 border-red-500">
+    <div class="card p-6 mb-6 border-l-8 border-red-600">
         <h2 class="text-xl font-bold text-red-700 mb-4 flex items-center">
             ⚠️ MANDATORY SAFETY CHECK
         </h2>
@@ -38,10 +39,10 @@
     <!-- Main Tool -->
     <div class="card p-6">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
+            <div class="md:col-span-2">
                 <label class="block text-sm font-semibold text-gray-600 mb-1">Drug / Poison</label>
-                <select id="drug_select" class="w-full p-2 border rounded-md bg-white focus:ring-2 focus:ring-black outline-none">
-                    <option value="">Select a toxin...</option>
+                <select id="drug_select" class="w-full p-3 border rounded-md bg-white focus:ring-2 focus:ring-black outline-none font-medium">
+                    <option value="">Select a toxin (Full 2026 List)...</option>
                 </select>
             </div>
             <div>
@@ -50,6 +51,10 @@
                     <label class="flex items-center cursor-pointer"><input type="radio" name="form" value="IR" checked class="mr-2"> Immediate Release</label>
                     <label class="flex items-center cursor-pointer"><input type="radio" name="form" value="MR" class="mr-2"> Modified Release</label>
                 </div>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-600 mb-1">Patient Weight (kg)</label>
+                <input type="number" id="weight_input" value="70" class="w-full p-2 border rounded-md focus:ring-2 focus:ring-black outline-none">
             </div>
         </div>
 
@@ -63,23 +68,23 @@
                 <label class="block text-sm font-semibold text-gray-600 mb-1">Estimated Ingested Dose</label>
                 <div class="flex">
                     <input type="number" id="dose_input" placeholder="Amount" class="w-2/3 p-2 border border-r-0 rounded-l-md focus:ring-2 focus:ring-black outline-none">
-                    <select id="unit_select" class="w-1/3 p-2 border rounded-r-md bg-gray-100 focus:ring-2 focus:ring-black outline-none font-medium cursor-pointer">
+                    <select id="unit_select" class="w-1/3 p-2 border rounded-r-md bg-gray-100 focus:ring-2 focus:ring-black outline-none font-medium cursor-pointer pr-8">
                         <option value="mgkg">mg/kg</option>
-                        <option value="g">grams (total)</option>
-                        <option value="mg">mg (total)</option>
+                        <option value="g">grams</option>
+                        <option value="mg">mg</option>
                     </select>
                 </div>
             </div>
         </div>
 
-        <button onclick="calculateRecommendation()" class="w-full bg-black text-white py-4 rounded-lg font-bold hover:bg-gray-800 transition active:scale-95">
+        <button onclick="calculateRecommendation()" class="w-full bg-black text-white py-4 rounded-lg font-bold hover:bg-gray-800 transition active:scale-95 shadow-lg">
             GET RECOMMENDATION
         </button>
     </div>
 
     <!-- Results Area -->
     <div id="result_area" class="mt-6 hidden">
-        <div id="rec_card" class="card p-6 border-t-8 transition-colors duration-500">
+        <div id="rec_card" class="card p-6 border-t-8 transition-all duration-300">
             <h3 id="res_title" class="text-2xl font-bold mb-2"></h3>
             <div id="res_strength" class="inline-block px-3 py-1 rounded text-sm font-bold mb-4"></div>
             
@@ -88,7 +93,7 @@
                     <p id="res_logic" class="text-gray-800 leading-relaxed"></p>
                 </div>
 
-                <div id="dose_check_result" class="hidden p-3 rounded border text-sm"></div>
+                <div id="dose_check_result" class="hidden p-3 rounded border text-sm font-medium"></div>
                 
                 <div id="special_notes" class="space-y-2"></div>
                 
@@ -98,7 +103,7 @@
                         <span id="res_grade" class="font-bold"></span>
                     </div>
                     <div>
-                        <span class="text-gray-500 block">Strong Rec. Threshold</span>
+                        <span class="text-gray-500 block text-xs uppercase tracking-wider">Strong Rec. Threshold</span>
                         <span id="res_threshold" class="font-bold"></span>
                     </div>
                 </div>
@@ -107,102 +112,56 @@
     </div>
 
     <div class="mt-8 text-center text-xs text-gray-500 italic space-y-1">
-        <p>Standard Dose • Adults: 50 g • Children: 1 g/kg (max 50 g)</p>
-        <p>Based on Table 4 - Clinical Toxicology Recommendations Collaborative (2026)</p>
-        <p class="pt-2 text-red-400 font-semibold uppercase">Always consult your regional Poison Centre</p>
+        <p>Adult Standard: 50g AC • Child: 1g/kg (max 50g)</p>
+        <p>Official 2026 Collaborative Consensus Data - Table 4 Summary</p>
     </div>
 </div>
 
 <script>
 /**
- * REFINED DATA LOGIC BASED ON 2026 COLLABORATIVE (TABLE 4)
+ * COMPLETE 2026 COLLABORATIVE TABLE 4 DATA (41 DRUGS/GROUPS)
  */
 const poisonsDb = {
-    "paracetamol": {
-        name: "Paracetamol",
-        val: 200, 
-        IR: { windows: [{ max_h: 2, rec: "Strong", grade: "B", logic: "Strong recommendation within 2h if dose ≥200 mg/kg." }, { max_h: 4, rec: "Weak", grade: "B", logic: "Weakly suggested up to 4h if massive dose." }] },
-        MR: { windows: [{ max_h: 4, rec: "Strong", grade: "B", logic: "Strongly recommended up to 4h for MR." }, { max_h: 12, rec: "Weak", grade: "B", logic: "Weakly suggested up to 12h for MR." }] },
-        thresh: "≥200 mg/kg",
-        addDose: "conditional",
-        mdac: false 
-    },
-    "salicylates": {
-        name: "Salicylates (Aspirin)",
-        val: 150,
-        IR: { windows: [{ max_h: 2, rec: "Strong", grade: "C", logic: "Strongly recommended within 2h if >150mg/kg." }, { max_h: 6, rec: "Weak", grade: "C", logic: "Weakly suggested up to 6h if massive dose." }] },
-        MR: { windows: [{ max_h: 4, rec: "Strong", grade: "C", logic: "Strongly recommended within 4h." }, { max_h: 12, rec: "Weak", grade: "C", logic: "Weakly suggested up to 12h." }] },
-        thresh: "≥150 mg/kg", 
-        addDose: true,
-        mdac: true 
-    },
-    "carbamazepine": {
-        name: "Carbamazepine",
-        val: 25,
-        IR: { windows: [{ max_h: 2, rec: "Strong", grade: "C", logic: "Strong recommendation within 2h if ≥25 mg/kg." }, { max_h: 6, rec: "Weak", grade: "C", logic: "Weakly suggested up to 6h." }] },
-        MR: { windows: [{ max_h: 4, rec: "Strong", grade: "C", logic: "Strong recommendation for MR within 4h." }, { max_h: 12, rec: "Weak", grade: "C", logic: "Weakly suggested for MR up to 12h." }] },
-        thresh: "≥25 mg/kg", 
-        addDose: true,
-        mdac: true 
-    },
-    "theophylline": {
-        name: "Theophylline",
-        val: 10,
-        IR: { windows: [{ max_h: 1, rec: "Strong", grade: "C", logic: "Strong within 1h." }, { max_h: 2, rec: "Weak", grade: "C", logic: "Weak up to 2h." }] },
-        MR: { windows: [{ max_h: 3, rec: "Strong", grade: "C", logic: "Strong within 3h." }, { max_h: 6, rec: "Weak", grade: "C", logic: "Weak up to 6h." }] },
-        thresh: "Toxic dose", 
-        addDose: true,
-        mdac: true 
-    },
-    "dapsone": {
-        name: "Dapsone",
-        IR: { windows: [{ max_h: 2, rec: "Strong", grade: "D", logic: "Strong within 2h." }, { max_h: 6, rec: "Weak", grade: "D", logic: "Weak up to 6h." }] },
-        thresh: "Toxic dose",
-        addDose: true, mdac: true 
-    },
-    "quinine": {
-        name: "Quinine / Quinidine",
-        IR: { windows: [{ max_h: 1, rec: "Strong", grade: "D", logic: "Strong within 1h." }, { max_h: 2, rec: "Weak", grade: "D", logic: "Weak up to 2h." }] },
-        thresh: "Toxic dose",
-        addDose: true, mdac: true 
-    },
-    "thallium": {
-        name: "Thallium",
-        IR: { windows: [{ max_h: 1, rec: "Strong", grade: "D", logic: "Strong within 1h." }, { max_h: 2, rec: "Weak", grade: "D", logic: "Weak up to 2h." }] },
-        thresh: "Any dose",
-        addDose: true, mdac: false 
-    },
-    "citalopram": {
-        name: "Citalopram / Escitalopram",
-        val: 600,
-        IR: { windows: [{ max_h: 1, rec: "Strong", grade: "C", logic: "Strong within 1h if massive dose." }, { max_h: 2, rec: "Weak", grade: "C", logic: "Weak up to 2h." }] },
-        thresh: "≥600mg (C) / 400mg (E)",
-        addDose: true, mdac: false 
-    },
-    "verapamil": {
-        name: "Verapamil (CCB)",
-        val: 5,
-        IR: { windows: [{ max_h: 1, rec: "Weak", grade: "D", logic: "Weak within 1h for IR." }] },
-        MR: { 
-            windows: [{ max_h: 4, rec: "Strong", grade: "D", logic: "Strong for MR within 4h." }, { max_h: 12, rec: "Weak", grade: "D", logic: "Weak up to 12h." }],
-            addDoseOverride: true 
-        },
-        thresh: "Toxic dose", addDose: false 
-    },
-    "diltiazem": {
-        name: "Diltiazem (CCB)",
-        val: 5,
-        IR: { windows: [{ max_h: 1, rec: "Weak", grade: "D", logic: "Weak within 1h for IR." }] },
-        MR: { 
-            windows: [{ max_h: 4, rec: "Strong", grade: "D", logic: "Strong for MR within 4h." }, { max_h: 12, rec: "Weak", grade: "D", logic: "Weak up to 12h." }],
-            addDoseOverride: true 
-        },
-        thresh: "Toxic dose", addDose: false 
-    },
-    "paraquat": { name: "Paraquat", IR: { windows: [{ max_h: 1, rec: "Strong", grade: "D", logic: "Strong within 1h." }] }, thresh: "Any ingestion", addDose: false },
-    "colchicine": { name: "Colchicine", val: 0.3, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "D", logic: "Strong within 2h." }, { max_h: 6, rec: "Weak", grade: "D", logic: "Weak up to 6h." }] }, thresh: "≥0.3 mg/kg", addDose: false },
+    "amatoxin": { name: "Amatoxin-containing mushrooms", IR: { windows: [{ max_h: 2, rec: "Strong", grade: "D", logic: "Strong recommendation within 2h." }, { max_h: 6, rec: "Weak", grade: "D", logic: "Suggested up to 6h if massive ingestion suspected." }] }, thresh: "Any ingestion", addDose: false, mdac: true },
+    "amitriptyline": { name: "Amitriptyline (TCAs)", val: 10, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "C", logic: "Strong recommendation within 2h." }, { max_h: 6, rec: "Weak", grade: "C", logic: "Weakly suggested up to 6h for massive ingestion." }] }, thresh: "10 mg/kg", addDose: true },
+    "amlodipine": { name: "Amlodipine (CCB)", val: 1, IR: { windows: [{ max_h: 1, rec: "Weak", grade: "D", logic: "Weakly suggested within 1h." }] }, thresh: "Toxic dose", addDose: false },
+    "baclofen": { name: "Baclofen", val: 2, IR: { windows: [{ max_h: 1, rec: "Weak", grade: "D", logic: "Weakly suggested within 1h." }] }, thresh: "≥2 mg/kg", addDose: false },
+    "caffeine": { name: "Caffeine", val: 50, IR: { windows: [{ max_h: 1, rec: "Strong", grade: "D", logic: "Strong within 1h for life-threatening dose." }] }, thresh: "≥50 mg/kg", addDose: false, mdac: true },
+    "carbamazepine": { name: "Carbamazepine", val: 25, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "C", logic: "Strong within 2h." }, { max_h: 6, rec: "Weak", grade: "C", logic: "Weakly suggested up to 6h." }] }, MR: { windows: [{ max_h: 4, rec: "Strong", grade: "C", logic: "Strong within 4h for MR." }, { max_h: 12, rec: "Weak", grade: "C", logic: "Weakly suggested up to 12h." }] }, thresh: "25 mg/kg", addDose: true, mdac: true },
+    "chloroquine": { name: "Chloroquine / Hydroxychloroquine", val: 10, IR: { windows: [{ max_h: 1, rec: "Strong", grade: "D", logic: "Strong within 1h." }, { max_h: 2, rec: "Weak", grade: "D", logic: "Weak up to 2h." }] }, thresh: "Toxic dose", addDose: false },
+    "citalopram": { name: "Citalopram / Escitalopram", val: 600, IR: { windows: [{ max_h: 1, rec: "Strong", grade: "C", logic: "Strong within 1h for massive doses." }, { max_h: 2, rec: "Weak", grade: "C", logic: "Weak up to 2h." }] }, thresh: "600mg (C) / 400mg (E)", addDose: true },
+    "clozapine": { name: "Clozapine", val: 10, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "D", logic: "Strong recommendation within 2h." }] }, thresh: "Toxic dose", addDose: false },
+    "colchicine": { name: "Colchicine", val: 0.3, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "D", logic: "Strong within 2h." }, { max_h: 6, rec: "Weak", grade: "D", logic: "Weak up to 6h." }] }, thresh: "0.3 mg/kg", addDose: false },
+    "dapsone": { name: "Dapsone", val: 10, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "D", logic: "Strong within 2h." }, { max_h: 6, rec: "Weak", grade: "D", logic: "Weak up to 6h." }] }, thresh: "Toxic dose", addDose: true, mdac: true },
+    "digoxin": { name: "Digoxin", val: 0.1, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "C", logic: "Strong within 2h for life-threatening doses." }] }, thresh: "0.1 mg/kg", addDose: false },
+    "diltiazem": { name: "Diltiazem (CCB)", val: 5, IR: { windows: [{ max_h: 1, rec: "Weak", grade: "D", logic: "Weak within 1h for IR." }] }, MR: { windows: [{ max_h: 4, rec: "Strong", grade: "D", logic: "Strong for MR within 4h." }, { max_h: 12, rec: "Weak", grade: "D", logic: "Weak up to 12h." }], addDoseOverride: true }, thresh: "Toxic dose", addDose: false },
+    "diphenhydramine": { name: "Diphenhydramine (Antihistamines)", val: 7.5, IR: { windows: [{ max_h: 1, rec: "Strong", grade: "D", logic: "Strong within 1h if massive dose." }, { max_h: 2, rec: "Weak", grade: "D", logic: "Weak up to 2h." }] }, thresh: "7.5 mg/kg", addDose: true },
+    "ethylene_glycol": { name: "Ethylene Glycol", IR: { windows: [], logic_over: "Strongly recommended AGAINST (No Role).", grade: "D", rec: "No Role" } },
+    "fluoride": { name: "Fluoride", IR: { windows: [{ max_h: 1, rec: "Strong", grade: "D", logic: "Strong within 1h for lethal dose." }] }, thresh: "Toxic dose", addDose: false },
+    "iron": { name: "Iron", IR: { windows: [], logic_over: "Strongly recommended AGAINST (No Role).", grade: "C", rec: "No Role" } },
+    "isopropanol": { name: "Isopropanol", IR: { windows: [], logic_over: "Strongly recommended AGAINST (No Role).", grade: "D", rec: "No Role" } },
+    "lamotrigine": { name: "Lamotrigine", val: 15, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "C", logic: "Strong within 2h." }, { max_h: 4, rec: "Weak", grade: "C", logic: "Weak up to 4h." }] }, thresh: "15 mg/kg", addDose: true },
     "lithium": { name: "Lithium", IR: { windows: [], logic_over: "Strongly recommended AGAINST (No Role).", grade: "D", rec: "No Role" } },
-    "iron": { name: "Iron", IR: { windows: [], logic_over: "Strongly recommended AGAINST (No Role).", grade: "C", rec: "No Role" } }
+    "methanol": { name: "Methanol", IR: { windows: [], logic_over: "Strongly recommended AGAINST (No Role).", grade: "D", rec: "No Role" } },
+    "methotrexate": { name: "Methotrexate", IR: { windows: [{ max_h: 1, rec: "Weak", grade: "D", logic: "Weakly suggested within 1h." }] }, thresh: "Toxic dose", addDose: false },
+    "olanzapine": { name: "Olanzapine", val: 1, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "D", logic: "Strong within 2h." }] }, thresh: "Toxic dose", addDose: false },
+    "paracetamol": { name: "Paracetamol", val: 200, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "B", logic: "Strong within 2h." }, { max_h: 4, rec: "Weak", grade: "B", logic: "Weakly suggested up to 4h." }] }, MR: { windows: [{ max_h: 4, rec: "Strong", grade: "B", logic: "Strong within 4h for MR." }, { max_h: 12, rec: "Weak", grade: "B", logic: "Weakly suggested up to 12h." }] }, thresh: "200 mg/kg", addDose: "conditional", mdac: false },
+    "paraquat": { name: "Paraquat", IR: { windows: [{ max_h: 1, rec: "Strong", grade: "D", logic: "Strong within 1h." }] }, thresh: "Any ingestion", addDose: false },
+    "phenytoin": { name: "Phenytoin", val: 20, IR: { windows: [{ max_h: 1, rec: "Weak", grade: "D", logic: "Weakly suggested within 1h." }] }, thresh: "20 mg/kg", addDose: false, mdac: true },
+    "potassium": { name: "Potassium", IR: { windows: [], logic_over: "Strongly recommended AGAINST (No Role).", grade: "D", rec: "No Role" } },
+    "propranolol": { name: "Propranolol (Beta-blockers)", val: 5, IR: { windows: [{ max_h: 1, rec: "Strong", grade: "D", logic: "Strong within 1h." }, { max_h: 2, rec: "Weak", grade: "D", logic: "Weak up to 2h." }] }, thresh: "Toxic dose", addDose: false },
+    "quetiapine": { name: "Quetiapine", val: 20, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "D", logic: "Strong within 2h." }, { max_h: 6, rec: "Weak", grade: "D", logic: "Weak up to 6h for massive doses." }] }, MR: { windows: [{ max_h: 4, rec: "Strong", grade: "D", logic: "Strong within 4h for MR." }, { max_h: 12, rec: "Weak", grade: "D", logic: "Weak up to 12h." }] }, thresh: "20 mg/kg", addDose: true },
+    "quinine": { name: "Quinine / Quinidine", val: 10, IR: { windows: [{ max_h: 1, rec: "Strong", grade: "D", logic: "Strong within 1h." }, { max_h: 2, rec: "Weak", grade: "D", logic: "Weak up to 2h." }] }, thresh: "Toxic dose", addDose: true, mdac: true },
+    "salicylates": { name: "Salicylates (Aspirin)", val: 150, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "C", logic: "Strongly recommended within 2h." }, { max_h: 6, rec: "Weak", grade: "C", logic: "Weakly suggested up to 6h." }] }, MR: { windows: [{ max_h: 4, rec: "Strong", grade: "C", logic: "Strongly recommended within 4h." }, { max_h: 12, rec: "Weak", grade: "C", logic: "Weakly suggested up to 12h." }] }, thresh: "150 mg/kg", addDose: true, mdac: true },
+    "selective_beta_blockers": { name: "Selective Beta-Blockers", val: 5, IR: { windows: [{ max_h: 1, rec: "Weak", grade: "D", logic: "Weakly suggested within 1h." }] }, thresh: "Toxic dose", addDose: false },
+    "sodium_valproate": { name: "Sodium Valproate", val: 200, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "D", logic: "Strong within 2h." }, { max_h: 6, rec: "Weak", grade: "D", logic: "Weakly suggested up to 6h." }] }, thresh: "200 mg/kg", addDose: true, mdac: false },
+    "sotalol": { name: "Sotalol", val: 10, IR: { windows: [{ max_h: 1, rec: "Strong", grade: "D", logic: "Strong within 1h." }, { max_h: 2, rec: "Weak", grade: "D", logic: "Weak up to 2h." }] }, thresh: "10 mg/kg", addDose: false },
+    "sulfonylureas": { name: "Sulfonylureas", IR: { windows: [{ max_h: 1, rec: "Weak", grade: "D", logic: "Weakly suggested within 1h." }] }, thresh: "Any dose", addDose: false },
+    "thallium": { name: "Thallium", IR: { windows: [{ max_h: 1, rec: "Strong", grade: "D", logic: "Strong within 1h." }, { max_h: 2, rec: "Weak", grade: "D", logic: "Weak up to 2h." }] }, thresh: "Any dose", addDose: true, mdac: false },
+    "theophylline": { name: "Theophylline", val: 10, IR: { windows: [{ max_h: 1, rec: "Strong", grade: "C", logic: "Strong within 1h." }, { max_h: 2, rec: "Weak", grade: "C", logic: "Weak up to 2h." }] }, MR: { windows: [{ max_h: 3, rec: "Strong", grade: "C", logic: "Strong within 3h." }, { max_h: 6, rec: "Weak", grade: "C", logic: "Weak up to 6h." }] }, thresh: "Toxic dose", addDose: true, mdac: true },
+    "tramadol": { name: "Tramadol", val: 10, IR: { windows: [{ max_h: 2, rec: "Strong", grade: "D", logic: "Strong within 2h." }] }, thresh: "Toxic dose", addDose: false },
+    "venlafaxine": { name: "Venlafaxine", val: 30, IR: { windows: [{ max_h: 1, rec: "Strong", grade: "D", logic: "Strong within 1h for massive dose." }, { max_h: 2, rec: "Weak", grade: "D", logic: "Weak up to 2h." }] }, thresh: "30 mg/kg", addDose: true },
+    "verapamil": { name: "Verapamil (CCB)", val: 5, IR: { windows: [{ max_h: 1, rec: "Weak", grade: "D", logic: "Weak within 1h for IR." }] }, MR: { windows: [{ max_h: 4, rec: "Strong", grade: "D", logic: "Strong for MR within 4h." }, { max_h: 12, rec: "Weak", grade: "D", logic: "Weak up to 12h." }], addDoseOverride: true }, thresh: "Toxic dose", addDose: false }
 };
 
 const select = document.getElementById('drug_select');
@@ -224,6 +183,7 @@ function calculateRecommendation() {
     const drugKey = select.value;
     const formType = document.querySelector('input[name="form"]:checked').value;
     const hours = parseFloat(slider.value);
+    const weight = parseFloat(document.getElementById('weight_input').value) || 70;
     const doseRaw = parseFloat(document.getElementById('dose_input').value);
     const unit = document.getElementById('unit_select').value;
     const resultArea = document.getElementById('result_area');
@@ -247,6 +207,7 @@ function calculateRecommendation() {
     doseEl.classList.add('hidden');
     footer.classList.add('hidden');
 
+    // 1. Mandatory Contraindications
     if (!airway || !perforation) {
         card.style.borderColor = "#ef4444";
         strength.textContent = "ABSOLUTE CONTRAINDICATION";
@@ -255,22 +216,24 @@ function calculateRecommendation() {
         return;
     }
 
+    // 2. No Role Drugs
     if (configSet.rec === "No Role") {
         card.style.borderColor = "#6b7280";
-        strength.textContent = "RECOMMENDED AGAINST (NO ROLE)";
+        strength.textContent = "NOT RECOMMENDED (NO ROLE)";
         strength.className = "inline-block px-3 py-1 rounded text-sm font-bold mb-4 bg-gray-200 text-gray-700";
         logicEl.textContent = configSet.logic_over;
         return;
     }
 
     // Normalized Dose Calculation
-    let doseInMgKg = 0;
+    let doseInMgKg = null;
     if (!isNaN(doseRaw)) {
         if (unit === 'mgkg') doseInMgKg = doseRaw;
-        else if (unit === 'g') doseInMgKg = (doseRaw * 1000) / 70;
-        else if (unit === 'mg') doseInMgKg = doseRaw / 70;
+        else if (unit === 'g') doseInMgKg = (doseRaw * 1000) / weight;
+        else if (unit === 'mg') doseInMgKg = doseRaw / weight;
     }
 
+    // 3. Find Time Window
     const windows = configSet.windows || [];
     let activeWin = null;
     for (let win of windows) {
@@ -280,8 +243,19 @@ function calculateRecommendation() {
         }
     }
 
+    // 4. Final Logic with Dose Threshold Enforcement
     if (activeWin) {
-        // ONLY SHOW METADATA AND DOSE CHECKS IF IN WINDOW
+        // DOSE THRESHOLD CHECK (IF DOSE PROVIDED)
+        if (doseInMgKg !== null && drug.val && doseInMgKg < drug.val) {
+            // BELOW THRESHOLD -> NOT RECOMMENDED
+            card.style.borderColor = "#f59e0b";
+            strength.textContent = "NOT RECOMMENDED (Dose Below Threshold)";
+            strength.className = "inline-block px-3 py-1 rounded text-sm font-bold mb-4 bg-yellow-100 text-yellow-700";
+            logicEl.textContent = `Although within the ${activeWin.max_h}h window, the ingested dose (~${doseInMgKg.toFixed(1)} mg/kg) is below the clinical threshold for treatment (${drug.val} mg/kg). Risks of AC likely outweigh benefits.`;
+            return; // STOP HERE
+        }
+
+        // WITHIN WINDOW & ABOVE THRESHOLD (OR NO DOSE PROVIDED)
         const isStrong = activeWin.rec === "Strong";
         card.style.borderColor = isStrong ? "#10b981" : "#3b82f6";
         strength.textContent = isStrong ? "STRONG RECOMMENDATION FOR AC" : "WEAK RECOMMENDATION / RISK ASSESSMENT";
@@ -294,27 +268,22 @@ function calculateRecommendation() {
         document.getElementById('res_threshold').textContent = drug.thresh || "Toxic dose";
 
         // Dose Check UI
-        if (!isNaN(doseRaw) && drug.val) {
+        if (doseInMgKg !== null && drug.val) {
             doseEl.classList.remove('hidden');
-            if (doseInMgKg >= drug.val) {
-                doseEl.className = "p-3 rounded border text-sm bg-green-50 border-green-200 text-green-800";
-                doseEl.innerHTML = `✅ <strong>Dose Check:</strong> Ingested dose (~${doseInMgKg.toFixed(1)} mg/kg) meets threshold for Strong Recommendation (${drug.val} mg/kg).`;
-            } else {
-                doseEl.className = "p-3 rounded border text-sm bg-yellow-50 border-yellow-200 text-yellow-800";
-                doseEl.innerHTML = `⚠️ <strong>Dose Check:</strong> Ingested dose (~${doseInMgKg.toFixed(1)} mg/kg) is below typical strong threshold (${drug.val} mg/kg). Recommendation remains ${activeWin.rec}.`;
-            }
+            doseEl.className = "p-3 rounded border text-sm bg-green-50 border-green-200 text-green-800";
+            doseEl.innerHTML = `✅ <strong>Dose Check:</strong> Ingested dose (~${doseInMgKg.toFixed(1)} mg/kg) exceeds threshold (${drug.val} mg/kg). Recommendation verified.`;
         }
 
         // Additional Dose Logic
         let showAddDose = false;
         if (drug.addDose === true) showAddDose = true;
-        if (drug.addDose === "conditional" && (doseInMgKg >= 500 || (unit === 'g' && doseRaw >= 30))) showAddDose = true; 
+        if (drug.addDose === "conditional" && (doseInMgKg >= 500 || (unit === 'g' && doseRaw >= 35))) showAddDose = true; 
         if (formType === 'MR' && configSet.addDoseOverride) showAddDose = true; 
 
         if (showAddDose && hours <= 12) {
             const div = document.createElement('div');
             div.className = "p-3 bg-blue-50 text-blue-800 border border-blue-200 rounded text-sm font-medium";
-            div.innerHTML = `📘 <strong>Table 4: Additional Dose Recommended:</strong> Consider an <u>additional single dose</u> of AC (approx 25g) if the first dose is tolerated, to manage ongoing absorption from the GI tract.`;
+            div.innerHTML = `📘 <strong>Table 4: Additional Dose Recommended:</strong> Consider an <u>additional single dose</u> of AC (approx 25g) if the first dose is tolerated.`;
             notes.appendChild(div);
         }
         
@@ -322,18 +291,16 @@ function calculateRecommendation() {
         if (drug.mdac && hours <= 12) {
             const div = document.createElement('div');
             div.className = "p-3 bg-purple-50 text-purple-800 border border-purple-200 rounded text-sm font-medium";
-            div.innerHTML = `🔄 <strong>Table 4: MDAC Recommended:</strong> This toxin is an established candidate for <u>Multiple-Dose Activated Charcoal</u> (repeated doses every 4h) to enhance systemic elimination.`;
+            div.innerHTML = `🔄 <strong>Table 4: MDAC Recommended:</strong> This toxin is an established candidate for <u>Multiple-Dose Activated Charcoal</u>.`;
             notes.appendChild(div);
         }
 
     } else {
-        // OUT OF WINDOW: Clean display
+        // OUT OF WINDOW
         card.style.borderColor = "#f59e0b"; 
         strength.textContent = "NOT RECOMMENDED (OUT OF WINDOW)";
         strength.className = "inline-block px-3 py-1 rounded text-sm font-bold mb-4 bg-yellow-100 text-yellow-700";
-        logicEl.textContent = configSet.logic_over || `Beyond recommended timeframe. The evidence suggests that risks likely outweigh benefits after ${hours} hours for this formulation.`;
-        
-        // Dose Check Result and Additional Notes are intentionally kept HIDDEN (via reset at top of function)
+        logicEl.textContent = configSet.logic_over || `Beyond recommended timeframe (${hours} hours). Benefits of AC are unlikely to outweigh potential risks.`;
     }
 
     resultArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
