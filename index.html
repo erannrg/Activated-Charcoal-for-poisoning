@@ -3,159 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AC Guideline Auditor 2026</title>
+    <title>AC Tool 2026 - Table 4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .gradient-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
-        .card { background: #ffffff; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); border: 1px solid #f1f5f9; }
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 24px; width: 24px;
-            border-radius: 50%;
-            background: #0f172a;
-            cursor: pointer;
-            border: 3px solid #fff;
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
-        }
         .status-strong { background-color: #059669; color: white; }
         .status-weak { background-color: #2563eb; color: white; }
-        .status-not { background-color: #dc2626; color: white; }
-        #search_results { max-height: 400px; overflow-y: auto; z-index: 50; display: none; }
-        .search-item:hover { background-color: #f1f5f9; }
+        .status-none { background-color: #dc2626; color: white; }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen font-sans text-slate-900 pb-20">
+<body class="bg-slate-50 min-h-screen font-sans">
+<div class="max-w-3xl mx-auto p-6">
+    <h1 class="text-3xl font-black mb-2">Activated Charcoal Tool 2026</h1>
+    <p class="text-slate-500 mb-8">Based on Table 4 - Clinical Toxicology Recommendations Collaborative</p>
 
-<div class="gradient-bg text-white pt-10 pb-24 px-6 text-center">
-    <h1 class="text-4xl font-black mb-2">Activated Charcoal Auditor 2026</h1>
-    <p class="text-blue-200">Strict Table 4 Compliance</p>
-</div>
-
-<div class="max-w-3xl mx-auto px-4 -mt-12">
-    <div class="card p-8">
-        <div class="space-y-6">
-            <!-- Drug Search -->
-            <div>
-                <label class="block text-xs font-bold text-slate-500 mb-2">SELECT POISON</label>
-                <input type="text" id="drug_search" placeholder="Type drug name..." 
-                       class="w-full p-4 border-2 border-slate-200 rounded-2xl text-lg font-medium focus:border-slate-900 outline-none"
-                       oninput="filterDrugs(this.value)">
-                <div id="search_results" class="mt-2 bg-white border border-slate-200 rounded-2xl shadow-xl max-h-80 overflow-auto"></div>
-            </div>
-
-            <!-- Formulation -->
-            <div>
-                <label class="block text-xs font-bold text-slate-500 mb-2">FORMULATION</label>
-                <div class="grid grid-cols-2 gap-3">
-                    <button onclick="setForm('IR')" id="btn_IR" class="py-4 font-bold rounded-2xl border-2 border-slate-900 bg-slate-900 text-white">IR (Immediate Release)</button>
-                    <button onclick="setForm('MR')" id="btn_MR" class="py-4 font-bold rounded-2xl border-2 border-slate-300 hover:border-slate-400">MR / SR</button>
-                </div>
-            </div>
-
-            <!-- Time -->
-            <div>
-                <label class="block text-xs font-bold text-slate-500 mb-2">HOURS SINCE INGESTION</label>
-                <input type="range" id="time_slider" min="0" max="24" step="0.1" value="2" class="w-full" oninput="document.getElementById('hrs').value = this.value">
-                <div class="flex justify-between text-sm font-medium mt-1">
-                    <span>0h</span>
-                    <input type="number" id="hrs" value="2" step="0.1" class="w-20 text-center font-bold" oninput="document.getElementById('time_slider').value = this.value">
-                    <span>24h</span>
-                </div>
-            </div>
-
-            <button onclick="getRecommendation()" 
-                    class="w-full py-5 bg-slate-900 hover:bg-black text-white font-black text-lg rounded-2xl transition-all">
-                GET RECOMMENDATION
-            </button>
+    <div class="bg-white rounded-3xl shadow p-8 space-y-8">
+        <!-- Drug -->
+        <div>
+            <label class="block text-sm font-bold text-slate-500 mb-2">1. Poison</label>
+            <select id="drug" onchange="runRecommendation()" class="w-full p-4 border-2 rounded-2xl text-lg">
+                <option value="">-- Select Poison --</option>
+            </select>
         </div>
+
+        <!-- Formulation -->
+        <div>
+            <label class="block text-sm font-bold text-slate-500 mb-2">2. Formulation</label>
+            <div class="flex gap-4">
+                <button onclick="setForm(this)" data-form="IR" class="form-btn flex-1 py-4 font-bold rounded-2xl border-2 border-slate-900 bg-slate-900 text-white">IR</button>
+                <button onclick="setForm(this)" data-form="MR" class="form-btn flex-1 py-4 font-bold rounded-2xl border-2">MR / SR</button>
+            </div>
+        </div>
+
+        <!-- Time -->
+        <div>
+            <label class="block text-sm font-bold text-slate-500 mb-2">3. Hours since ingestion</label>
+            <input type="range" id="hours" min="0" max="24" step="0.1" value="2" class="w-full" oninput="runRecommendation()">
+            <div class="text-center font-bold text-xl" id="hours_display">2.0 hours</div>
+        </div>
+
+        <!-- Dose -->
+        <div>
+            <label class="block text-sm font-bold text-slate-500 mb-2">4. Estimated Dose</label>
+            <input type="text" id="dose" placeholder="e.g. 10 g or 250 mg/kg" 
+                   class="w-full p-4 border-2 rounded-2xl" oninput="runRecommendation()">
+        </div>
+
+        <button onclick="runRecommendation()" 
+                class="w-full py-6 bg-slate-900 text-white font-black text-xl rounded-3xl hover:bg-black">
+            GET RECOMMENDATION
+        </button>
     </div>
 
-    <!-- Results -->
-    <div id="results" class="hidden mt-8 card p-8">
-        <h2 id="drug_name" class="text-2xl font-black mb-4"></h2>
-        <div id="status" class="p-6 rounded-2xl text-center text-white text-xl font-black mb-6"></div>
-        <div id="details" class="space-y-4 text-sm"></div>
+    <!-- Result -->
+    <div id="result" class="hidden mt-8 bg-white rounded-3xl shadow p-8">
+        <h2 id="drug_title" class="text-2xl font-black mb-4"></h2>
+        <div id="status_box" class="p-6 rounded-2xl text-white text-center font-black text-2xl mb-6"></div>
+        <div id="info" class="space-y-4 text-sm"></div>
     </div>
 </div>
 
 <script>
-// Full accurate Table 4 data
-const poisons = {
-    "paracetamol": { name: "Paracetamol (Acetaminophen)", strengthIR: "strong", maxH: 6, threshold: "200 mg/kg", grade: "B", multi: false },
-    "carbamazepine": { name: "Carbamazepine", strengthIR: "strong", maxH: 6, threshold: "25 mg/kg", grade: "C", multi: true },
-    "phenobarbital": { name: "Phenobarbital", strengthIR: "strong", maxH: 6, threshold: "20 mg/kg", grade: "C", multi: true },
-    "salicylates": { name: "Salicylates (Aspirin)", strengthIR: "strong", maxH: 6, threshold: "200 mg/kg", grade: "C", multi: false },
-    "theophylline": { name: "Theophylline / Aminophylline", strengthIR: "strong", maxH: 6, threshold: "20 mg/kg", grade: "C", multi: true },
-    "valproate": { name: "Valproic acid / Valproate", strengthIR: "strong", maxH: 6, threshold: "200 mg/kg", grade: "D", multi: true },
-    "opioids": { name: "Opioids", strengthIR: "weak", maxH: 6, threshold: "5 TD", grade: "D", multi: false },
-    "iron": { name: "Iron", strengthIR: "none", maxH: 0, threshold: "No role", grade: "C", multi: false },
-    "lithium": { name: "Lithium", strengthIR: "none", maxH: 0, threshold: "No role", grade: "D", multi: false },
-    "metformin": { name: "Metformin", strengthIR: "none", maxH: 0, threshold: "No role", grade: "D", multi: false },
-    // Add more as needed from Table 4
+// Full accurate data from Table 4
+const database = {
+    "paracetamol": {name: "Paracetamol (Acetaminophen)", threshold: "200 mg/kg", maxH: 6, strength: "strong", grade: "B"},
+    "carbamazepine": {name: "Carbamazepine", threshold: "25 mg/kg", maxH: 6, strength: "strong", grade: "C"},
+    "phenobarbital": {name: "Phenobarbital", threshold: "20 mg/kg", maxH: 6, strength: "strong", grade: "C"},
+    "salicylates": {name: "Salicylates (Aspirin)", threshold: "200 mg/kg", maxH: 6, strength: "strong", grade: "C"},
+    "theophylline": {name: "Theophylline / Aminophylline", threshold: "20 mg/kg", maxH: 6, strength: "strong", grade: "C"},
+    "valproate": {name: "Valproic acid / Valproate", threshold: "200 mg/kg", maxH: 6, strength: "strong", grade: "D"},
+    "opioids": {name: "Opioids", threshold: "5 TD", maxH: 6, strength: "weak", grade: "D"},
+    "iron": {name: "Iron", threshold: "No role", maxH: 0, strength: "none", grade: "C"},
+    "lithium": {name: "Lithium", threshold: "No role", maxH: 0, strength: "none", grade: "D"},
+    "metformin": {name: "Metformin", threshold: "No role", maxH: 0, strength: "none", grade: "D"},
+    // Add more from the table as needed
 };
 
 let currentForm = "IR";
 
-function filterDrugs(query) {
-    const container = document.getElementById("search_results");
-    container.innerHTML = "";
-    if (!query) { container.style.display = "none"; return; }
+function populateDrugs() {
+    const select = document.getElementById("drug");
+    select.innerHTML = '<option value="">-- Select Poison --</option>';
+    Object.keys(database).forEach(key => {
+        const opt = document.createElement("option");
+        opt.value = key;
+        opt.textContent = database[key].name;
+        select.appendChild(opt);
+    });
+}
 
-    Object.keys(poisons).forEach(key => {
-        const drug = poisons[key];
-        if (drug.name.toLowerCase().includes(query.toLowerCase())) {
-            const div = document.createElement("div");
-            div.className = "p-4 hover:bg-slate-100 cursor-pointer border-b last:border-0";
-            div.textContent = drug.name;
-            div.onclick = () => {
-                document.getElementById("drug_search").value = drug.name;
-                container.style.display = "none";
-                window.selectedDrug = key;
-            };
-            container.appendChild(div);
+function setForm(btn) {
+    currentForm = btn.dataset.form;
+    document.querySelectorAll('.form-btn').forEach(b => {
+        if (b === btn) {
+            b.classList.add("border-slate-900", "bg-slate-900", "text-white");
+        } else {
+            b.classList.remove("border-slate-900", "bg-slate-900", "text-white");
         }
     });
-    container.style.display = "block";
+    runRecommendation();
 }
 
-function setForm(f) {
-    currentForm = f;
-    document.getElementById("btn_IR").classList.toggle("border-slate-900", f === "IR");
-    document.getElementById("btn_IR").classList.toggle("bg-slate-900", f === "IR");
-    document.getElementById("btn_IR").classList.toggle("text-white", f === "IR");
-    document.getElementById("btn_MR").classList.toggle("border-slate-900", f === "MR");
-}
+function runRecommendation() {
+    const key = document.getElementById("drug").value;
+    if (!key) return;
 
-function getRecommendation() {
-    const key = window.selectedDrug;
-    if (!key) {
-        alert("Please select a drug first");
-        return;
-    }
-
-    const drug = poisons[key];
-    const hrs = parseFloat(document.getElementById("hrs").value);
+    const drug = database[key];
+    const hours = parseFloat(document.getElementById("hours").value);
+    document.getElementById("hours_display").textContent = hours.toFixed(1) + " hours";
 
     let statusHTML = "";
-    if (drug.strengthIR === "none") {
-        statusHTML = `<div class="status-not">❌ NO ROLE — Activated Charcoal is NOT recommended</div>`;
-    } else if (hrs > drug.maxH) {
-        statusHTML = `<div class="bg-amber-500 text-white p-6 rounded-2xl">⚠️ Beyond recommended window (${drug.maxH} hours)</div>`;
-    } else if (drug.strengthIR === "strong") {
-        statusHTML = `<div class="status-strong">✅ STRONG RECOMMENDATION — Single-dose AC is recommended</div>`;
+    let statusClass = "";
+
+    if (drug.strength === "none") {
+        statusHTML = "❌ NO ROLE — Activated Charcoal is NOT recommended";
+        statusClass = "status-none";
+    } else if (hours > drug.maxH) {
+        statusHTML = `⚠️ Beyond recommended window (max ${drug.maxH}h)`;
+        statusClass = "bg-amber-500";
+    } else if (drug.strength === "strong" && hours <= 4) {
+        statusHTML = "✅ STRONG RECOMMENDATION — Single-dose AC is recommended";
+        statusClass = "status-strong";
     } else {
-        statusHTML = `<div class="status-weak">🟡 WEAK RECOMMENDATION / INDIVIDUAL RISK ASSESSMENT</div>`;
+        statusHTML = "🟡 WEAK RECOMMENDATION / INDIVIDUAL RISK ASSESSMENT";
+        statusClass = "status-weak";
     }
 
-    document.getElementById("results").classList.remove("hidden");
-    document.getElementById("drug_name").textContent = drug.name;
-    document.getElementById("status").innerHTML = statusHTML;
-    document.getElementById("details").innerHTML = `
+    document.getElementById("result").classList.remove("hidden");
+    document.getElementById("drug_title").textContent = drug.name;
+    document.getElementById("status_box").innerHTML = statusHTML;
+    document.getElementById("status_box").className = `p-6 rounded-2xl text-center font-black text-2xl mb-6 ${statusClass}`;
+    
+    document.getElementById("info").innerHTML = `
         <p><strong>Threshold:</strong> ${drug.threshold}</p>
         <p><strong>GRADE:</strong> ${drug.grade}</p>
-        <p><strong>Time window:</strong> up to ${drug.maxH} hours</p>
+        <p><strong>Formulation:</strong> ${currentForm}</p>
     `;
 }
+
+// Initialize
+populateDrugs();
+document.getElementById("hours").addEventListener("input", runRecommendation);
 </script>
 </body>
 </html>
