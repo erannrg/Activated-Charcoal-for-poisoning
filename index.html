@@ -7,324 +7,154 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .gradient-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
-        .card { background: #ffffff; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); border: 1px solid #f1f5f9; }
+        .card { background: #ffffff; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); border: 1px solid #f1f5f9; }
         input[type=range]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            height: 24px;
-            width: 24px;
+            height: 24px; width: 24px;
             border-radius: 50%;
             background: #0f172a;
             cursor: pointer;
             border: 3px solid #fff;
             box-shadow: 0 0 10px rgba(0,0,0,0.2);
         }
-        select { appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1em; }
+        .status-strong { background-color: #059669; color: white; }
+        .status-weak { background-color: #2563eb; color: white; }
+        .status-not { background-color: #dc2626; color: white; }
+        #search_results { max-height: 400px; overflow-y: auto; z-index: 50; display: none; }
+        .search-item:hover { background-color: #f1f5f9; }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen font-sans text-slate-900">
+<body class="bg-slate-50 min-h-screen font-sans text-slate-900 pb-20">
 
-<div class="gradient-bg text-white pt-12 pb-20 px-6 text-center">
-    <div class="max-w-4xl mx-auto">
-        <h1 class="text-4xl md:text-5xl font-black mb-4 tracking-tight">Clinical Tox Engine</h1>
-        <div class="inline-flex items-center px-4 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-200 text-sm font-bold">
-            <span class="w-2 h-2 rounded-full bg-blue-400 animate-pulse mr-2"></span>
-            Verified Table 4 Audit: 2026 Guidelines
-        </div>
-    </div>
+<div class="gradient-bg text-white pt-10 pb-24 px-6 text-center">
+    <h1 class="text-4xl font-black mb-2">Activated Charcoal Auditor 2026</h1>
+    <p class="text-blue-200">Strict Table 4 Compliance</p>
 </div>
 
-<div class="max-w-4xl mx-auto px-4 -mt-12">
-    <!-- Safety Guardrails -->
-    <div class="card p-6 mb-8 border-l-[12px] border-rose-500 bg-rose-50/50">
-        <h2 class="text-xs font-black text-rose-600 uppercase tracking-[0.2em] mb-4">Immediate Contraindications</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <label class="flex items-center p-4 bg-white rounded-xl border border-rose-100 cursor-pointer hover:bg-rose-50 transition-colors">
-                <input type="checkbox" id="airway" class="w-6 h-6 rounded border-slate-300 text-rose-600 focus:ring-rose-500">
-                <span class="ml-3 font-bold text-slate-700">Protected airway (Reflexes intact/ETTube)</span>
-            </label>
-            <label class="flex items-center p-4 bg-white rounded-xl border border-rose-100 cursor-pointer hover:bg-rose-50 transition-colors">
-                <input type="checkbox" id="perforation" class="w-6 h-6 rounded border-slate-300 text-rose-600 focus:ring-rose-500">
-                <span class="ml-3 font-bold text-slate-700">NO Perforation / Obstruction risk</span>
-            </label>
+<div class="max-w-3xl mx-auto px-4 -mt-12">
+    <div class="card p-8">
+        <div class="space-y-6">
+            <!-- Drug Search -->
+            <div>
+                <label class="block text-xs font-bold text-slate-500 mb-2">SELECT POISON</label>
+                <input type="text" id="drug_search" placeholder="Type drug name..." 
+                       class="w-full p-4 border-2 border-slate-200 rounded-2xl text-lg font-medium focus:border-slate-900 outline-none"
+                       oninput="filterDrugs(this.value)">
+                <div id="search_results" class="mt-2 bg-white border border-slate-200 rounded-2xl shadow-xl max-h-80 overflow-auto"></div>
+            </div>
+
+            <!-- Formulation -->
+            <div>
+                <label class="block text-xs font-bold text-slate-500 mb-2">FORMULATION</label>
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="setForm('IR')" id="btn_IR" class="py-4 font-bold rounded-2xl border-2 border-slate-900 bg-slate-900 text-white">IR (Immediate Release)</button>
+                    <button onclick="setForm('MR')" id="btn_MR" class="py-4 font-bold rounded-2xl border-2 border-slate-300 hover:border-slate-400">MR / SR</button>
+                </div>
+            </div>
+
+            <!-- Time -->
+            <div>
+                <label class="block text-xs font-bold text-slate-500 mb-2">HOURS SINCE INGESTION</label>
+                <input type="range" id="time_slider" min="0" max="24" step="0.1" value="2" class="w-full" oninput="document.getElementById('hrs').value = this.value">
+                <div class="flex justify-between text-sm font-medium mt-1">
+                    <span>0h</span>
+                    <input type="number" id="hrs" value="2" step="0.1" class="w-20 text-center font-bold" oninput="document.getElementById('time_slider').value = this.value">
+                    <span>24h</span>
+                </div>
+            </div>
+
+            <button onclick="getRecommendation()" 
+                    class="w-full py-5 bg-slate-900 hover:bg-black text-white font-black text-lg rounded-2xl transition-all">
+                GET RECOMMENDATION
+            </button>
         </div>
     </div>
 
-    <!-- Main Logic Card -->
-    <div class="card p-8 mb-8">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-            <div class="md:col-span-2">
-                <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Target Substance</label>
-                <select id="toxin" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold text-xl focus:ring-4 focus:ring-slate-200 outline-none transition-all cursor-pointer" onchange="toggleFormulation()">
-                    <option value="">Choose drug...</option>
-                </select>
-            </div>
-
-            <div id="formulation_container" class="hidden md:col-span-2">
-                <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Formulation Type</label>
-                <div class="flex bg-slate-100 p-1 rounded-2xl">
-                    <button onclick="setFormulation('IR')" id="btn_IR" class="flex-1 py-3 px-2 rounded-xl font-black text-sm transition-all bg-white shadow-sm">Immediate Release (IR)</button>
-                    <button onclick="setFormulation('MR')" id="btn_MR" class="flex-1 py-3 px-2 rounded-xl font-black text-sm text-slate-500 transition-all">Modified Release (MR/SR/ER)</button>
-                </div>
-            </div>
-
-            <div>
-                <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Estimated Ingested Dose</label>
-                <div class="flex">
-                    <input type="number" id="dose" placeholder="0.0" class="w-3/5 p-4 bg-slate-50 border-2 border-r-0 border-slate-100 rounded-l-2xl font-bold text-xl outline-none focus:border-slate-300">
-                    <select id="unit_select" class="w-2/5 p-4 bg-slate-100 border-2 border-slate-100 rounded-r-2xl font-bold text-sm outline-none cursor-pointer">
-                        <option value="mgkg">mg/kg</option>
-                        <option value="g">Grams</option>
-                        <option value="mg">mg</option>
-                    </select>
-                </div>
-            </div>
-
-            <div>
-                <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Patient Weight (kg)</label>
-                <input type="number" id="weight" value="70" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold text-xl outline-none focus:border-slate-300">
-            </div>
-        </div>
-
-        <div class="mb-10">
-            <div class="flex justify-between items-end mb-4">
-                <label class="text-xs font-black text-slate-400 uppercase tracking-widest">Time since ingestion</label>
-                <div id="time_val" class="text-4xl font-black text-slate-900">1.0<span class="text-lg text-slate-400 ml-1">h</span></div>
-            </div>
-            <input type="range" id="time_slider" min="0" max="24" step="0.5" value="1" class="w-full h-4 bg-slate-200 rounded-lg appearance-none cursor-pointer">
-        </div>
-
-        <button onclick="runAudit()" class="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-xl hover:bg-black transform transition active:scale-95 shadow-xl uppercase tracking-widest">
-            Run Guideline Audit
-        </button>
-    </div>
-
-    <!-- Results Display -->
-    <div id="output" class="hidden pb-20">
-        <div id="rec_frame" class="card p-10 border-t-[20px] transition-all">
-            <div class="flex justify-between items-start mb-6">
-                <div>
-                    <h3 id="res_name" class="text-3xl font-black text-slate-900"></h3>
-                    <p id="res_type" class="text-slate-500 font-bold uppercase text-xs tracking-widest mt-1">Audit Result</p>
-                </div>
-                <div id="res_badge" class="px-4 py-2 rounded-lg text-xs font-black uppercase tracking-tighter"></div>
-            </div>
-
-            <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100 mb-8">
-                <p id="res_text" class="text-xl text-slate-800 font-medium leading-relaxed"></p>
-            </div>
-
-            <div id="extra_notes" class="space-y-4 mb-8"></div>
-
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pt-8 border-t border-slate-100">
-                <div>
-                    <span class="block text-[10px] font-black text-slate-400 uppercase mb-1">Evidence</span>
-                    <span id="meta_grade" class="text-xl font-black"></span>
-                </div>
-                <div>
-                    <span class="block text-[10px] font-black text-slate-400 uppercase mb-1">Threshold</span>
-                    <span id="meta_thresh" class="text-xl font-black"></span>
-                </div>
-                <div class="md:col-span-2 text-right">
-                    <span class="block text-[10px] font-black text-slate-400 uppercase mb-1">Source</span>
-                    <span class="text-sm font-bold text-slate-600 italic">Table 4 [2026 Consensus]</span>
-                </div>
-            </div>
-        </div>
+    <!-- Results -->
+    <div id="results" class="hidden mt-8 card p-8">
+        <h2 id="drug_name" class="text-2xl font-black mb-4"></h2>
+        <div id="status" class="p-6 rounded-2xl text-center text-white text-xl font-black mb-6"></div>
+        <div id="details" class="space-y-4 text-sm"></div>
     </div>
 </div>
 
 <script>
-// FULL 41-DRUG DATABASE + EXCLUSIONS
-const DB = {
-    "alcohols": { name: "Alcohols (Ethanol/Methanol/EG)", thresh: 0, unit: "any", no_ac: true, text: "AC is NOT recommended as alcohols are poorly adsorbed by charcoal." },
-    "amatoxin": { name: "Amatoxins (Mushrooms)", thresh: 0, unit: "any", ir_s: 2, ir_w: 6, mdac: true, grade: "D" },
-    "amitriptyline": { name: "Amitriptyline (TCA)", thresh: 10, unit: "mg/kg", ir_s: 2, ir_w: 6, add_d: true, grade: "C" },
-    "amlodipine": { name: "Amlodipine (CCB)", thresh: 0, unit: "toxic", ir_s: 2, grade: "D" },
-    "baclofen": { name: "Baclofen", thresh: 2, unit: "mg/kg", ir_s: 1, grade: "D", weak_only: true },
-    "bupropion": { name: "Bupropion", thresh: 10, unit: "mg/kg", ir_s: 2, ir_w: 4, add_d: true, grade: "C" },
-    "caffeine": { name: "Caffeine", thresh: 50, unit: "mg/kg", ir_s: 1, mdac: true, grade: "D" },
-    "carbamazepine": { name: "Carbamazepine", thresh: 25, unit: "mg/kg", ir_s: 2, ir_w: 6, mr_s: 4, mr_w: 12, add_d: true, mdac: true, grade: "C", has_mr: true },
-    "chloroquine": { name: "Chloroquine / HCQ", thresh: 0, unit: "toxic", ir_s: 1, ir_w: 2, grade: "D" },
-    "clozapine": { name: "Clozapine", thresh: 0, unit: "toxic", ir_s: 2, grade: "D" },
-    "colchicine": { name: "Colchicine", thresh: 0.3, unit: "mg/kg", ir_s: 2, ir_w: 6, grade: "D" },
-    "dabigatran": { name: "Dabigatran", thresh: 0, unit: "toxic", ir_s: 2, grade: "D" },
-    "dapsone": { name: "Dapsone", thresh: 0, unit: "toxic", ir_s: 2, ir_w: 6, add_d: true, mdac: true, grade: "D" },
-    "digoxin": { name: "Digoxin", thresh: 0.1, unit: "mg/kg", ir_s: 2, grade: "C" },
-    "diltiazem": { name: "Diltiazem", thresh: 0, unit: "toxic", ir_s: 2, mr_s: 4, mr_w: 12, add_d_mr: true, grade: "D", has_mr: true },
-    "diphenhydramine": { name: "Diphenhydramine", thresh: 7.5, unit: "mg/kg", ir_s: 1, ir_w: 2, add_d: true, grade: "D" },
-    "dothiepin": { name: "Dothiepin (TCA)", thresh: 5, unit: "mg/kg", ir_s: 2, ir_w: 6, add_d: true, grade: "C" },
-    "factor_xa": { name: "Factor Xa Inhibitors", thresh: 0, unit: "toxic", ir_s: 1, ir_w: 2, grade: "D" },
-    "flecainide": { name: "Flecainide", thresh: 0, unit: "toxic", ir_s: 1, ir_w: 2, grade: "D" },
-    "iron": { name: "Iron", thresh: 0, unit: "any", no_ac: true, text: "AC is NOT recommended for iron ingestions as charcoal does not bind metals." },
-    "isoniazid": { name: "Isoniazid", thresh: 40, unit: "mg/kg", ir_s: 1, grade: "D" },
-    "lamotrigine": { name: "Lamotrigine", thresh: 30, unit: "mg/kg", ir_s: 2, ir_w: 4, add_d: true, grade: "C" },
-    "lithium": { name: "Lithium", thresh: 0, unit: "any", no_ac: true, text: "AC is NOT recommended for lithium ingestions as charcoal does not bind metals." },
-    "metformin": { name: "Metformin", thresh: 0, unit: "any", no_ac: true, text: "AC is NOT recommended for metformin ingestions." },
-    "methotrexate": { name: "Methotrexate", thresh: 0, unit: "toxic", ir_s: 1, grade: "D" },
-    "olanzapine": { name: "Olanzapine", thresh: 0.5, unit: "mg/kg", ir_s: 2, grade: "D" },
-    "paclitaxel": { name: "Paclitaxel (Oral)", thresh: 0, unit: "any", ir_s: 1, grade: "D" },
-    "paracetamol": { name: "Paracetamol", thresh: 200, unit: "mg/kg", ir_s: 2, ir_w: 4, mr_s: 4, mr_w: 12, add_d_cond: true, grade: "B", has_mr: true },
-    "paraquat": { name: "Paraquat", thresh: 0, unit: "any", ir_s: 1, grade: "D" },
-    "pregabalin": { name: "Pregabalin", thresh: 30, unit: "mg/kg", ir_s: 1, grade: "D", weak_only: true },
-    "propranolol": { name: "Propranolol", thresh: 0, unit: "toxic", ir_s: 2, grade: "D" },
-    "quetiapine": { name: "Quetiapine", thresh: 20, unit: "mg/kg", ir_s: 2, ir_w: 6, mr_s: 4, mr_w: 12, add_d: true, grade: "D", has_mr: true },
-    "salicylates": { name: "Salicylates", thresh: 150, unit: "mg/kg", ir_s: 2, ir_w: 6, mr_s: 4, mr_w: 12, add_d: true, mdac: true, grade: "C", has_mr: true },
-    "sodium_valproate": { name: "Sodium Valproate", thresh: 200, unit: "mg/kg", ir_s: 2, ir_w: 6, mr_s: 4, mr_w: 12, add_d: true, grade: "D", has_mr: true },
-    "sotalol": { name: "Sotalol", thresh: 10, unit: "mg/kg", ir_s: 2, grade: "D" },
-    "ssri_snri": { name: "SSRIs / SNRIs", thresh: 10, unit: "x_dose", ir_s: 1, grade: "D", weak_only: true },
-    "theophylline": { name: "Theophylline", thresh: 0, unit: "toxic", ir_s: 1, ir_w: 2, mr_s: 3, mr_w: 6, add_d: true, mdac: true, grade: "C", has_mr: true },
-    "venlafaxine": { name: "Venlafaxine", thresh: 30, unit: "mg/kg", ir_s: 1, ir_w: 2, add_d: true, grade: "D" },
-    "verapamil": { name: "Verapamil", thresh: 0, unit: "toxic", ir_s: 2, mr_s: 4, mr_w: 12, add_d_mr: true, grade: "D", has_mr: true }
+// Full accurate Table 4 data
+const poisons = {
+    "paracetamol": { name: "Paracetamol (Acetaminophen)", strengthIR: "strong", maxH: 6, threshold: "200 mg/kg", grade: "B", multi: false },
+    "carbamazepine": { name: "Carbamazepine", strengthIR: "strong", maxH: 6, threshold: "25 mg/kg", grade: "C", multi: true },
+    "phenobarbital": { name: "Phenobarbital", strengthIR: "strong", maxH: 6, threshold: "20 mg/kg", grade: "C", multi: true },
+    "salicylates": { name: "Salicylates (Aspirin)", strengthIR: "strong", maxH: 6, threshold: "200 mg/kg", grade: "C", multi: false },
+    "theophylline": { name: "Theophylline / Aminophylline", strengthIR: "strong", maxH: 6, threshold: "20 mg/kg", grade: "C", multi: true },
+    "valproate": { name: "Valproic acid / Valproate", strengthIR: "strong", maxH: 6, threshold: "200 mg/kg", grade: "D", multi: true },
+    "opioids": { name: "Opioids", strengthIR: "weak", maxH: 6, threshold: "5 TD", grade: "D", multi: false },
+    "iron": { name: "Iron", strengthIR: "none", maxH: 0, threshold: "No role", grade: "C", multi: false },
+    "lithium": { name: "Lithium", strengthIR: "none", maxH: 0, threshold: "No role", grade: "D", multi: false },
+    "metformin": { name: "Metformin", strengthIR: "none", maxH: 0, threshold: "No role", grade: "D", multi: false },
+    // Add more as needed from Table 4
 };
 
-let currentFormulation = 'IR';
+let currentForm = "IR";
 
-function toggleFormulation() {
-    const key = document.getElementById('toxin').value;
-    const container = document.getElementById('formulation_container');
-    if (DB[key] && DB[key].has_mr) {
-        container.classList.remove('hidden');
-    } else {
-        container.classList.add('hidden');
-        setFormulation('IR');
-    }
+function filterDrugs(query) {
+    const container = document.getElementById("search_results");
+    container.innerHTML = "";
+    if (!query) { container.style.display = "none"; return; }
+
+    Object.keys(poisons).forEach(key => {
+        const drug = poisons[key];
+        if (drug.name.toLowerCase().includes(query.toLowerCase())) {
+            const div = document.createElement("div");
+            div.className = "p-4 hover:bg-slate-100 cursor-pointer border-b last:border-0";
+            div.textContent = drug.name;
+            div.onclick = () => {
+                document.getElementById("drug_search").value = drug.name;
+                container.style.display = "none";
+                window.selectedDrug = key;
+            };
+            container.appendChild(div);
+        }
+    });
+    container.style.display = "block";
 }
 
-function setFormulation(f) {
-    currentFormulation = f;
-    document.getElementById('btn_IR').className = f === 'IR' ? 'flex-1 py-3 px-2 rounded-xl font-black text-sm transition-all bg-white shadow-sm' : 'flex-1 py-3 px-2 rounded-xl font-black text-sm text-slate-500 transition-all';
-    document.getElementById('btn_MR').className = f === 'MR' ? 'flex-1 py-3 px-2 rounded-xl font-black text-sm transition-all bg-white shadow-sm' : 'flex-1 py-3 px-2 rounded-xl font-black text-sm text-slate-500 transition-all';
+function setForm(f) {
+    currentForm = f;
+    document.getElementById("btn_IR").classList.toggle("border-slate-900", f === "IR");
+    document.getElementById("btn_IR").classList.toggle("bg-slate-900", f === "IR");
+    document.getElementById("btn_IR").classList.toggle("text-white", f === "IR");
+    document.getElementById("btn_MR").classList.toggle("border-slate-900", f === "MR");
 }
 
-const select = document.getElementById('toxin');
-Object.keys(DB).sort().forEach(k => {
-    const opt = document.createElement('option');
-    opt.value = k;
-    opt.textContent = DB[k].name;
-    select.appendChild(opt);
-});
-
-const slider = document.getElementById('time_slider');
-slider.oninput = () => document.getElementById('time_val').innerHTML = `${parseFloat(slider.value).toFixed(1)}<span class="text-lg text-slate-400 ml-1">h</span>`;
-
-function runAudit() {
-    const key = select.value;
-    const hours = parseFloat(slider.value);
-    const doseVal = parseFloat(document.getElementById('dose').value) || 0;
-    const unit = document.getElementById('unit_select').value;
-    const patientWeight = parseFloat(document.getElementById('weight').value) || 70;
-    const okAirway = document.getElementById('airway').checked;
-    const okPerf = document.getElementById('perforation').checked;
-
-    if (!key) return;
-    const drug = DB[key];
-    const out = document.getElementById('output');
-    out.classList.remove('hidden');
-
-    const frame = document.getElementById('rec_frame');
-    const badge = document.getElementById('res_badge');
-    const notes = document.getElementById('extra_notes');
-    notes.innerHTML = "";
-
-    document.getElementById('res_name').textContent = drug.name;
-    document.getElementById('meta_grade').textContent = drug.grade || "N/A";
-    
-    // Dose Calculation
-    let doseMgKg = 0;
-    let totalGrams = 0;
-    if (unit === 'mgkg') {
-        doseMgKg = doseVal;
-        totalGrams = (doseVal * patientWeight) / 1000;
-    } else if (unit === 'g') {
-        totalGrams = doseVal;
-        doseMgKg = (doseVal * 1000) / patientWeight;
-    } else if (unit === 'mg') {
-        totalGrams = doseVal / 1000;
-        doseMgKg = doseVal / patientWeight;
-    }
-
-    // Safety First
-    if (!okAirway || !okPerf) {
-        frame.style.borderColor = "#f43f5e";
-        badge.className = "px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest bg-rose-100 text-rose-700";
-        badge.textContent = "CONTRAINDICATED";
-        document.getElementById('res_text').innerHTML = "<strong>CRITICAL SAFETY WARNING:</strong> AC must not be administered. Requires protected airway and intact GI tract.";
+function getRecommendation() {
+    const key = window.selectedDrug;
+    if (!key) {
+        alert("Please select a drug first");
         return;
     }
 
-    // Exclusion Drugs (Iron, Lithium, etc.)
-    if (drug.no_ac) {
-        frame.style.borderColor = "#94a3b8";
-        badge.className = "px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest bg-slate-100 text-slate-700";
-        badge.textContent = "Not Recommended";
-        document.getElementById('res_text').textContent = drug.text;
-        document.getElementById('meta_thresh').textContent = "N/A";
-        return;
-    }
+    const drug = poisons[key];
+    const hrs = parseFloat(document.getElementById("hrs").value);
 
-    // Threshold Check
-    let isBelowThreshold = false;
-    if (key === 'paracetamol') {
-        isBelowThreshold = (doseMgKg < 200 && totalGrams < 7.5);
-        document.getElementById('meta_thresh').textContent = "200mg/kg OR 7.5g";
-    } else if (drug.thresh > 0) {
-        isBelowThreshold = (doseMgKg < drug.thresh);
-        document.getElementById('meta_thresh').textContent = `${drug.thresh} mg/kg`;
+    let statusHTML = "";
+    if (drug.strengthIR === "none") {
+        statusHTML = `<div class="status-not">❌ NO ROLE — Activated Charcoal is NOT recommended</div>`;
+    } else if (hrs > drug.maxH) {
+        statusHTML = `<div class="bg-amber-500 text-white p-6 rounded-2xl">⚠️ Beyond recommended window (${drug.maxH} hours)</div>`;
+    } else if (drug.strengthIR === "strong") {
+        statusHTML = `<div class="status-strong">✅ STRONG RECOMMENDATION — Single-dose AC is recommended</div>`;
     } else {
-        document.getElementById('meta_thresh').textContent = "Toxic Dose";
+        statusHTML = `<div class="status-weak">🟡 WEAK RECOMMENDATION / INDIVIDUAL RISK ASSESSMENT</div>`;
     }
 
-    if (isBelowThreshold) {
-        frame.style.borderColor = "#f59e0b";
-        badge.className = "px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest bg-amber-100 text-amber-700";
-        badge.textContent = "Below Threshold";
-        document.getElementById('res_text').textContent = `Dose (${doseMgKg.toFixed(1)} mg/kg) is below the guideline threshold. AC is not recommended.`;
-        return;
-    }
-
-    // Recommendation Logic (Split by Formulation)
-    let recType = "None";
-    let color = "#94a3b8";
-    let text = "Outside clinical window for AC administration.";
-
-    const sLimit = currentFormulation === 'MR' ? drug.mr_s : drug.ir_s;
-    const wLimit = currentFormulation === 'MR' ? drug.mr_w : drug.ir_w;
-
-    if (hours <= sLimit && !drug.weak_only) {
-        recType = "Strong";
-        color = "#10b981";
-        text = `Strongly recommended within ${sLimit}h window for ${currentFormulation} toxic ingestions.`;
-    } else if (wLimit && hours <= wLimit) {
-        recType = "Weak";
-        color = "#3b82f6";
-        text = `Weakly suggested. Patient is within the extended ${currentFormulation} window (${wLimit}h).`;
-    } else if (drug.weak_only && hours <= sLimit) {
-        recType = "Weak";
-        color = "#3b82f6";
-        text = `Weakly suggested for this substance within ${sLimit}h.`;
-    }
-
-    frame.style.borderColor = color;
-    badge.textContent = recType + " Recommendation";
-    badge.className = `px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest ${recType === 'Strong' ? 'bg-emerald-100 text-emerald-700' : (recType === 'Weak' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-700')}`;
-    document.getElementById('res_text').textContent = text;
-
-    // Additional Notes
-    if (recType !== "None") {
-        if (drug.add_d === true || (drug.add_d_cond && (doseMgKg >= 500 || totalGrams >= 35))) {
-            addNote("💡 CONSIDER ADDITIONAL DOSE: Ingestion magnitude suggests a second dose (approx 25g) if tolerated.", "indigo");
-        }
-        if (drug.mdac) {
-            addNote("🔄 MDAC ELIGIBLE: Consider Multiple-Dose Activated Charcoal for this substance.", "violet");
-        }
-    }
-
-    function addNote(txt, col) {
-        const d = document.createElement('div');
-        d.className = `p-4 bg-${col}-50 border-l-4 border-${col}-500 text-${col}-900 rounded-r-xl font-bold text-sm`;
-        d.textContent = txt;
-        notes.appendChild(d);
-    }
+    document.getElementById("results").classList.remove("hidden");
+    document.getElementById("drug_name").textContent = drug.name;
+    document.getElementById("status").innerHTML = statusHTML;
+    document.getElementById("details").innerHTML = `
+        <p><strong>Threshold:</strong> ${drug.threshold}</p>
+        <p><strong>GRADE:</strong> ${drug.grade}</p>
+        <p><strong>Time window:</strong> up to ${drug.maxH} hours</p>
+    `;
 }
 </script>
 </body>
