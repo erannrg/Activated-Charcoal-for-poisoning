@@ -1,185 +1,31 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AC Tool 2026 - Table 4</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .strong { background-color: #166534; color: white; }
-        .weak { background-color: #1e40af; color: white; }
-        .none { background-color: #991b1b; color: white; }
-    </style>
-</head>
-<body class="bg-slate-50 min-h-screen font-sans">
-<div class="max-w-4xl mx-auto p-6">
+// @ts-nocheck and save as index.js; Node 20 will run it as-is.
 
-    <h1 class="text-4xl font-black mb-1">Activated Charcoal Tool 2026</h1>
-    <p class="text-slate-600 mb-8">Based on Table 4 — Clinical Toxicology Recommendations Collaborative</p>
+---- paste below this line ----
 
-    <!-- Safety Checklist -->
-    <div class="bg-amber-50 border border-amber-300 rounded-2xl p-6 mb-8">
-        <h3 class="font-bold text-amber-900 mb-3">✅ Mandatory Safety Checks</h3>
-        <label class="flex items-center gap-3 mb-2"><input type="checkbox" id="airway" class="w-5 h-5 accent-emerald-600"> Airway protected (intact reflexes or intubated)</label>
-        <label class="flex items-center gap-3"><input type="checkbox" id="gi" class="w-5 h-5 accent-emerald-600"> No risk of GI perforation or obstruction</label>
-    </div>
+/* index.ts — Activated Charcoal Decision Engine (single-file)
 
-    <div class="bg-white rounded-3xl shadow-xl p-8 space-y-8">
-        <div>
-            <label class="block text-sm font-semibold text-slate-500 mb-2">1. Poison</label>
-            <select id="drug" class="w-full p-4 border-2 border-slate-200 rounded-2xl text-lg" onchange="run()">
-                <option value="">-- Select Poison --</option>
-            </select>
-        </div>
+Encodes Table 4 exactly (43 poisons).
+Ignores MDAC.
+Distinguishes IR vs MR (and IR/MR, Any).
+Treats “Individual Risk assessment” and weak/strong recommendations against as Not Recommended.
+Supports SDAC and ADAC intents with the same stance/time logic.
+Provides a simple CLI. */
+type Stance = "Recommend" | "Suggest" | "Not Recommended"; type Grade = "A" | "B" | "C" | "D" | null; type FormulationKey = "IR" | "MR" | "Any" | "IR/MR";
 
-        <div>
-            <label class="block text-sm font-semibold text-slate-500 mb-2">2. Formulation</label>
-            <div class="flex gap-3">
-                <button onclick="setForm('IR')" id="btnIR" class="flex-1 py-4 font-bold rounded-2xl border-2 border-slate-900 bg-slate-900 text-white">IR</button>
-                <button onclick="setForm('MR')" id="btnMR" class="flex-1 py-4 font-bold rounded-2xl border-2">MR</button>
-            </div>
-        </div>
+interface RecBlock { stance: Stance; timeWindow: string | null; // exact table text for SDAC/ADAC grade: Grade; }
 
-        <div>
-            <label class="block text-sm font-semibold text-slate-500 mb-2">3. Hours since ingestion</label>
-            <input type="range" id="hours" min="0" max="24" step="0.1" value="2" class="w-full" oninput="updateHours()">
-            <div class="text-center font-bold text-2xl mt-2" id="hours_val">2.0 hours</div>
-        </div>
+interface FormulationRow { formulation: FormulationKey; sdac: RecBlock; adac: RecBlock; minDoseRule: string; // exact threshold text from table }
 
-        <div>
-            <label class="block text-sm font-semibold text-slate-500 mb-2">4. Estimated Dose (optional)</label>
-            <div class="flex gap-3">
-                <input type="number" id="dose" placeholder="e.g. 10" class="flex-1 p-4 border-2 border-slate-200 rounded-2xl">
-                <select id="unit" class="p-4 border-2 border-slate-200 rounded-2xl">
-                    <option value="mgkg">mg/kg</option>
-                    <option value="g">g</option>
-                    <option value="TD">TD</option>
-                </select>
-            </div>
-        </div>
+interface PoisonRec { poison: string; // canonical name exactly as in table formulations: ReadonlyArray; }
 
-        <button onclick="run()" class="w-full py-6 bg-slate-900 hover:bg-black text-white font-black text-xl rounded-3xl">
-            GET RECOMMENDATION
-        </button>
-    </div>
+export interface Query { poison: string; formulation: "IR" | "MR" | "Any"; timeSinceHours?: number; // optional intent: "SDAC" | "ADAC"; adacTriggers?: { pharmacobezoar?: boolean; modifiedRelease?: boolean; highDrugBurden?: boolean; inducedGastroparesis?: boolean; }; patientWeightKg?: number | null; estimatedDose?: { value: number | null; unit: | "mg/kg" | "mg" | "g" | "TD" | "seeds" | "µg/kg" | "Any dose" | "Individual Risk"; }; }
 
-    <div id="result" class="hidden mt-8 bg-white rounded-3xl shadow-xl p-8">
-        <h2 id="drug_name" class="text-3xl font-black mb-4"></h2>
-        <div id="status" class="p-8 rounded-2xl text-center text-2xl font-black mb-6"></div>
-        <div id="details" class="text-sm space-y-3"></div>
-    </div>
-</div>
+export interface Result { poison: string; // canonical formulation: "IR" | "MR"; intent: "SDAC" | "ADAC"; stance: Stance; timeText: string | null; // exact table text thresholdText: string; // exact table text grade: Grade; notes: string[]; }
 
-<script>
-// Accurate Table 4 data
-const db = {
-    "paracetamol": {name: "Paracetamol (Acetaminophen)", ir: {strength:"strong", maxH:2, suggestH:4, thresh:"200 mg/kg"}, mr: {strength:"strong", maxH:4, suggestH:12, thresh:"Individual Risk"}},
-    "carbamazepine": {name: "Carbamazepine", ir: {strength:"strong", maxH:4, thresh:"25 mg/kg"}, mr: {strength:"strong", maxH:4, thresh:"25 mg/kg"}},
-    "phenobarbital": {name: "Phenobarbital", ir: {strength:"strong", maxH:2, thresh:"20 mg/kg"}},
-    "salicylates": {name: "Salicylates (Aspirin)", ir: {strength:"strong", maxH:2, suggestH:4, thresh:"200 mg/kg"}, mr: {strength:"weak", maxH:12, thresh:"Individual Risk"}},
-    "theophylline": {name: "Theophylline / Aminophylline", ir: {strength:"strong", maxH:2, thresh:"20 mg/kg"}, mr: {strength:"strong", maxH:2, thresh:"20 mg/kg"}},
-    "valproate": {name: "Valproic acid / Valproate", ir: {strength:"weak", maxH:2, thresh:"200 mg/kg"}},
-    "opioids": {name: "Opioids", ir: {strength:"weak", maxH:2, thresh:"5 TD"}, mr: {strength:"weak", maxH:2, thresh:"5 TD"}},
-    "iron": {name: "Iron", ir: {strength:"none", maxH:0, thresh:"No role"}},
-    "lithium": {name: "Lithium", ir: {strength:"none", maxH:0, thresh:"No role"}},
-    "metformin": {name: "Metformin", ir: {strength:"none", maxH:0, thresh:"No role"}},
-    "bupropion": {name: "Bupropion", ir: {strength:"weak", maxH:2, thresh:"20 mg/kg"}},
-    "amlodipine": {name: "Amlodipine (CCB)", ir: {strength:"weak", maxH:1, thresh:"3-5 TD"}},
-    "verapamil": {name: "Verapamil (CCB)", ir: {strength:"weak", maxH:1, thresh:"3-5 TD"}},
-    "propranolol": {name: "Propranolol (Beta Blocker)", ir: {strength:"weak", maxH:1, thresh:"5-6 mg/kg"}},
-    "phenytoin": {name: "Phenytoin", ir: {strength:"weak", maxH:2, thresh:"40 mg/kg"}},
-    "dapsone": {name: "Dapsone", ir: {strength:"weak", maxH:1, thresh:"6 mg/kg"}},
-    "digoxin": {name: "Digoxin", ir: {strength:"weak", maxH:1, thresh:"75 µg/kg"}},
-    "tca": {name: "Tricyclic Antidepressants (TCA)", ir: {strength:"weak", maxH:2, thresh:"10 mg/kg"}},
-    "ssri": {name: "SSRIs", ir: {strength:"weak", maxH:1, thresh:"15 TD"}},
-    "chloroquine": {name: "Chloroquine", ir: {strength:"weak", maxH:1, thresh:"35 mg/kg"}},
-    "colchicine": {name: "Colchicine", ir: {strength:"weak", maxH:2, thresh:"0.4 mg/kg"}},
-    "quinine": {name: "Quinine", ir: {strength:"weak", maxH:1, thresh:"20 mg/kg"}},
-    "venlafaxine": {name: "Venlafaxine", ir: {strength:"weak", maxH:2, thresh:"25 mg/kg"}},
-    "warfarin": {name: "Warfarin", ir: {strength:"none", maxH:0, thresh:"0.7 mg/kg"}},
-    "methotrexate": {name: "Methotrexate", ir: {strength:"weak", maxH:1, thresh:"10 mg/kg"}},
-    "moclobemide": {name: "Moclobemide", ir: {strength:"weak", maxH:1, thresh:"50 mg/kg"}},
-    "sulfonylureas": {name: "Sulfonylureas", ir: {strength:"weak", maxH:1, thresh:"5 TD"}},
-    "paraquat": {name: "Paraquat", ir: {strength:"weak", maxH:4, thresh:"5 mg/kg"}},
-    "thallium": {name: "Thallium", ir: {strength:"weak", maxH:2, thresh:"10 mg/kg"}},
-    "ibuprofen": {name: "Ibuprofen", ir: {strength:"weak", maxH:1, thresh:"250 mg/kg"}},
-    "isoniazid": {name: "Isoniazid", ir: {strength:"weak", maxH:1, thresh:"40 mg/kg"}},
-    "lamotrigine": {name: "Lamotrigine", ir: {strength:"weak", maxH:2, thresh:"30 mg/kg"}},
-};
+// Helper constructors to keep exact text while reducing repetition type ConstRec = Readonly<{ stance: Stance; timeWindow: string | null; grade: Grade; }>; const R = (timeWindow: string, grade: Exclude<Grade, null>): ConstRec => ({ stance: "Recommend", timeWindow, grade, }); const S = (timeWindow: string, grade: Exclude<Grade, null>): ConstRec => ({ stance: "Suggest", timeWindow, grade, }); const N = (timeWindow: string | null, grade: Grade): ConstRec => ({ stance: "Not Recommended", timeWindow, grade, });
 
-let currentForm = "IR";
+// Table 4 — 43 poisons exactly as provided. MDAC ignored by logic below. export const TABLE4: ReadonlyArray = Object.freeze([ Object.freeze({ poison: "Acetaminophen", formulations: Object.freeze([ Object.freeze({ formulation: "IR", sdac: R("Recommend up to 2h, Suggest to 4h (B)", "B"), adac: R("Recommend up to 2h, Suggest to 4h (B)", "B"), minDoseRule: "200 mg/kg", }), Object.freeze({ formulation: "MR", sdac: R("Recommend up to 4h, Suggest to 12h (D)", "D"), adac: R("Recommend up to 4h, Suggest to 12h (D)", "D"), minDoseRule: "Individual Risk", }), ]), }), Object.freeze({ poison: "Alcohols (Ethanol/Methanol/EG)", formulations: Object.freeze([ Object.freeze({ formulation: "Any", sdac: N("Not Recommended (C/D)", "D"), adac: N("Not Recommended (D)", "D"), minDoseRule: "Any dose", }), ]), }), Object.freeze({ poison: "Antidysrhythmics (Type I/III)", formulations: Object.freeze([ Object.freeze({ formulation: "IR", sdac: S("Suggest up to 1h (D)", "D"), adac: S("Suggest up to 1h (D)", "D"), minDoseRule: "5 Therapeutic Doses (TD)", }), Object.freeze({ formulation: "MR", sdac: S("Suggest up to 2h (D)", "D"), adac: S("Suggest up to 2h (D)", "D"), minDoseRule: "5 TD", }), ]), }), Object.freeze({ poison: "Arsenic", formulations: Object.freeze([ Object.freeze({ formulation: "Any", sdac: N("Not Recommended (D)", "D"), adac: N("Not Recommended (D)", "D"), minDoseRule: "Any dose", }), ]), }), Object.freeze({ poison: "Benzodiazepines", formulations: Object.freeze([ Object.freeze({ formulation: "Any", sdac: N("Not Recommended (D)", "D"), adac: N("Not Recommended (D)", "D"), minDoseRule: "Any dose", }), ]), }), Object.freeze({ poison: "Beta-adrenergic antagonists", formulations: Object.freeze([ Object.freeze({ formulation: "IR", sdac: S("Suggest up to 1h (D)", "D"), adac: S("Suggest up to 1h (D)", "D"), minDoseRule: "5-6 mg/kg (drug specific)", }), Object.freeze({ formulation: "MR", sdac: S("Suggest up to 2h (D)", "D"), adac: S("Suggest up to 2h (D)", "D"), minDoseRule: "5-6 mg/kg (drug specific)", }), ]), }), Object.freeze({ poison: "Bupropion", formulations: Object.freeze([ Object.freeze({ formulation: "Any", sdac: S("Suggest up to 2h (D)", "D"), adac: S("Suggest up to 2h (D)", "D"), minDoseRule: "20 mg/kg", }), ]), }), Object.freeze({ poison: "Caesium", formulations: Object.freeze([ Object.freeze({ formulation: "Any", sdac: N("Not Recommended (D)", "D"), adac: N("Not Recommended (D)", "D"), minDoseRule: "Any dose", }), ]), }), Object.freeze({ poison: "Calcium-channel blockers", formulations: Object.freeze([ Object.freeze({ formulation: "IR", sdac: S("Suggest up to 1h (D)", "D"), adac: S("Suggest up to 1h (D)", "D"), minDoseRule: "3-5 TD (drug specific)", }), Object.freeze({ formulation: "MR", sdac: S("Suggest up to 2h (D)", "D"), adac: S("Suggest up to 2h (D)", "D"), minDoseRule: "3-5 TD (drug specific)", }), ]), }), Object.freeze({ poison: "Carbamazepine", formulations: Object.freeze([ Object.freeze({ formulation: "IR/MR", sdac: R("Recommend up to 4h (C)", "C"), adac: R("Recommend up to 4h (C)", "C"), minDoseRule: "25 mg/kg", }), ]), }), Object.freeze({ poison: "Cardiac glycosides (Digoxin)", formulations: Object.freeze([ Object.freeze({ formulation: "Any", sdac: S("Suggest up to 1h (C)", "C"), adac: S("Suggest up to 1h (C)", "C"), minDoseRule: "75 µg/kg", }), ]), }), Object.freeze({ poison: "Cardiac glycosides (Oleander)", formulations: Object.freeze([ Object.freeze({ formulation: "Any", sdac: N("Not Recommended (D)", "D"), adac: N("Not Recommended (D)", "D"), minDoseRule: "4 seeds", }), ]), }), Object.freeze({ poison: "Chloroquine", formulations: Object.freeze([ Object.freeze({ formulation: "Any", sdac: S("Suggest up to 1h (D)", "D"), adac: S("Suggest up to 1h (D)", "D"), minDoseRule: "35 mg/kg", }), ]), }), Object.freeze({ poison: "Cocaine", formulations: Object.freeze([ Object.freeze({ formulation: "Any", sdac: S("Suggest up to 1h (D)", "D"), adac: S("Suggest up to 1h (D)", "D"), minDoseRule: "5 mg/kg", }), ]), }), Object.freeze({ poison: "Colchicine", formulations: Object.freeze([ Object.freeze({ formulation: "Any", sdac: S("Suggest up to 2h (D)", "D"), adac: S("Suggest up to 2h (D)", "D"), minDoseRule: "0.4 mg/kg", }), ]), }), Object.freeze({ poison: "Copper", formulations: Object.freeze([ Object.freeze({ formulation: "Any", sdac: N("Not Recommended (D)", "D"), adac: N("Not Recommended (D)", "D"), minDoseRule: "Any dose", }), ]), }), Object.freeze({ poison: "Cyanide", formulations: Object.freeze([ Object.freeze({ formulation: "Any", sdac: S("Suggest up to 1h (D)", "D"), adac: S("Suggest up to 1h (D)", "D"), minDoseRule: "2 mg/kg", }), ]), }), Object.freeze({ poison: "Dapsone", formulations: Object.freeze([ Object.freeze({ formulation: "Any", sdac: S("Suggest up to 1h (D)", "D"), adac: S("Suggest up to 1h (D)", "D"), minDoseRule: "6 mg/kg", }), ]), }), Object.freeze({ poison: "Diphenhydramine", formulations: Object.freeze([ Object.freeze({ formulation: "Any", sdac: S("Suggest up to 1h (D)", "D"), adac: S("Suggest up to 1h (D)", "D"), minDoseRule: "15 mg/kg", }), ]), }), Object.freeze({ poison: "Disopyramide", formulations: Object.freeze([ Object.freeze({ formulation: "IR/MR", sdac: S("Suggest up to 1h (D)", "D"), adac: S("Suggest up to 1h (D)", "D"), minDoseRule: "1 g", }), ]), }), Object.freeze({ poison: "Factor Xa Inhibitors", formulations: Object.freeze([ Object.freeze({ formulation: "Any", sdac: S("Suggest up to 1h (D)", "D"), adac: S("Suggest up to 1h (D)", "D"), minDoseRule: "40 mg (Apix) / 80 mg (Riva)", }), ]), }), Object.freeze({ poison: "Ibuprofen", formulations: Object.freeze([ Object.freeze({ formulation: "Any", sdac: S("Suggest up to 1h (D)", "D"), adac: S("Suggest up to 1h (D)", "D"), minDoseRule: "250 mg/kg", }), ]), }), Object.freeze({ poison: "Iron", formulations: Object.freeze([ Object.freeze({ formulation: "Any", sdac: N("Not Recommended (D)", "D"), adac: N("Not Recommended (D)", "D"), minDoseRule: "Any dose", }), ]), }), Object.freeze({ poison: "Isoniazid", formulations: Object.freeze([ Object.freeze({ formulation: "Any", sdac: S("Suggest up to 1h (D)", "D"), adac: S("Suggest up to 1h (D)", "D"), minDoseRule: "40 mg/kg", }), ]), }), Object.freeze({ poison: "Lamotrigine", formulations: Object.freeze([ Object.freeze({ formulation: "IR/MR", sdac: S("Suggest up to 2h (D)", "D"), adac: S("Suggest up to 2h (D)", "D"), minDoseRule: "30 mg/kg", }), ]), }), Object.freeze({ poison: "Lead", formulations: Object.freeze([ Object.freeze({ formulation: "Any", sdac: N("Not Recommended (D)", "D"), adac: N("Not Recommended (D)", "D"), minDoseRule: "Any dose", }), ]), }), Object.freeze({ poison: "Lithium", formulations: Object.freeze([ Object.freeze({ formulation: "Any", sdac: N("Not Recommended (D)", "D"), adac: N("Not Recommended (D)", "D"), minDoseRule: "Any dose", }), ]), }), Object.freeze({ poison: "Mercury", formulations: Object.freeze([ Object.freeze({ formulation: "Any", sdac: N("Not Recommended (D)", "D"), adac: N("Not Recommended (D)", "D"), minDoseRule: "Any dose", }), ]), }), Object.freeze({ poison: "Metformin", formulations: Object.freeze([ Object.freeze({ formulation: "IR/MR", sdac: N("Not Recommended (D)", "D"), adac: N("Not Recommended (D)", "D"), minDoseRule: "Any dose", }), ]), }), Object.freeze({ poison: "Methotrexate", formulations: Object.freeze([ Object.freeze({ formulation: "Any", sdac: S("Suggest up to 1h (D)", "D"), adac: S("Suggest up to 1h (D)", "D"), minDoseRule: "10 mg/kg", }), ]), }), Object.freeze({ poison: "Moclobemide", formulations: Object.freeze([ Object.freeze({ formulation: "IR/MR", sdac: S("Suggest up to 1h (D)", "D"), adac: S("Suggest up to 1h (D)", "D"), minDoseRule: "50 mg/kg", }), ]), }), Object.freeze({ poison: "Opioids", formulations: Object.freeze([ Object.freeze({ formulation
 
-function populateDrugs() {
-    const select = document.getElementById("drug");
-    select.innerHTML = '<option value="">-- Select Poison --</option>';
-    Object.keys(db).forEach(key => {
-        const opt = document.createElement("option");
-        opt.value = key;
-        opt.textContent = db[key].name;
-        select.appendChild(opt);
-    });
-}
 
-function setForm(f) {
-    currentForm = f;
-    document.getElementById("btnIR").classList.toggle("bg-slate-900", f === "IR");
-    document.getElementById("btnIR").classList.toggle("text-white", f === "IR");
-    document.getElementById("btnMR").classList.toggle("border-slate-900", f === "MR");
-    runRecommendation();
-}
 
-function updateHours() {
-    document.getElementById("hours_val").textContent = parseFloat(document.getElementById("hours").value).toFixed(1) + " hours";
-    runRecommendation();
-}
 
-function runRecommendation() {
-    const key = document.getElementById("drug").value;
-    if (!key) return;
-
-    const drug = db[key];
-    const hours = parseFloat(document.getElementById("hours").value);
-    const data = (currentForm === "MR" && drug.mr) ? drug.mr : drug.ir;
-
-    // Safety check
-    if (!document.getElementById("airway").checked || !document.getElementById("gi").checked) {
-        document.getElementById("status").innerHTML = "❌ SAFETY CHECK FAILED — Confirm protected airway and no GI perforation risk";
-        document.getElementById("status").className = "p-8 rounded-2xl text-center text-xl font-black mb-6 bg-red-600 text-white";
-        document.getElementById("result").classList.remove("hidden");
-        return;
-    }
-
-    let statusHTML = "";
-    let statusClass = "";
-
-    if (data.strength === "none") {
-        statusHTML = "❌ NO ROLE — Activated Charcoal is NOT recommended";
-        statusClass = "none";
-    } else if (hours > data.maxH) {
-        statusHTML = `⚠️ Beyond recommended window (max ${data.maxH} hours)`;
-        statusClass = "bg-amber-600";
-    } else if (data.strength === "strong") {
-        statusHTML = "✅ STRONG RECOMMENDATION — Single-dose AC is recommended";
-        statusClass = "strong";
-    } else {
-        statusHTML = "🟡 WEAK RECOMMENDATION / INDIVIDUAL RISK ASSESSMENT";
-        statusClass = "weak";
-    }
-
-    document.getElementById("result").classList.remove("hidden");
-    document.getElementById("drug_name").textContent = drug.name + " (" + currentForm + ")";
-    document.getElementById("status").innerHTML = statusHTML;
-    document.getElementById("status").className = `p-8 rounded-2xl text-center text-2xl font-black mb-6 ${statusClass}`;
-
-    document.getElementById("details").innerHTML = `
-        <div><strong>Threshold:</strong> ${data.thresh}</div>
-        <div><strong>Maximum time window:</strong> ${data.maxH} hours</div>
-    `;
-}
-
-// Initialize
-populateDrugs();
-document.getElementById("hours").addEventListener("input", updateHours);
-</script>
-</body>
-</html>
