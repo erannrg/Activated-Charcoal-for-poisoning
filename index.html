@@ -6,76 +6,97 @@
     <title>AC Tool 2026 - Table 4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .status-strong { background-color: #059669; color: white; }
-        .status-weak { background-color: #2563eb; color: white; }
-        .status-none { background-color: #dc2626; color: white; }
+        .strong { background-color: #166534; color: white; }
+        .weak   { background-color: #1e40af; color: white; }
+        .none   { background-color: #991b1b; color: white; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen font-sans">
-<div class="max-w-3xl mx-auto p-6">
-    <h1 class="text-3xl font-black mb-2">Activated Charcoal Tool 2026</h1>
-    <p class="text-slate-500 mb-8">Based on Table 4 - Clinical Toxicology Recommendations Collaborative</p>
+<div class="max-w-4xl mx-auto p-6">
+    <h1 class="text-4xl font-black text-slate-900 mb-2">Activated Charcoal Tool 2026</h1>
+    <p class="text-slate-600 mb-8">Based on Table 4 — Clinical Toxicology Recommendations Collaborative</p>
 
-    <div class="bg-white rounded-3xl shadow p-8 space-y-8">
+    <div class="bg-white rounded-3xl shadow-xl p-8">
         <!-- Drug -->
-        <div>
-            <label class="block text-sm font-bold text-slate-500 mb-2">1. Poison</label>
-            <select id="drug" onchange="runRecommendation()" class="w-full p-4 border-2 rounded-2xl text-lg">
+        <div class="mb-6">
+            <label class="block text-sm font-semibold text-slate-500 mb-2">Poison / Drug</label>
+            <select id="drug" class="w-full p-4 border-2 border-slate-200 rounded-2xl text-lg focus:border-slate-900 outline-none" onchange="run()">
                 <option value="">-- Select Poison --</option>
             </select>
         </div>
 
         <!-- Formulation -->
-        <div>
-            <label class="block text-sm font-bold text-slate-500 mb-2">2. Formulation</label>
-            <div class="flex gap-4">
-                <button onclick="setForm(this)" data-form="IR" class="form-btn flex-1 py-4 font-bold rounded-2xl border-2 border-slate-900 bg-slate-900 text-white">IR</button>
-                <button onclick="setForm(this)" data-form="MR" class="form-btn flex-1 py-4 font-bold rounded-2xl border-2">MR / SR</button>
+        <div class="mb-6">
+            <label class="block text-sm font-semibold text-slate-500 mb-2">Formulation</label>
+            <div class="flex gap-3">
+                <button onclick="setForm('IR')" id="btnIR" class="flex-1 py-4 font-bold rounded-2xl border-2 border-slate-900 bg-slate-900 text-white">IR (Immediate Release)</button>
+                <button onclick="setForm('MR')" id="btnMR" class="flex-1 py-4 font-bold rounded-2xl border-2 border-slate-300">MR / SR</button>
             </div>
         </div>
 
         <!-- Time -->
-        <div>
-            <label class="block text-sm font-bold text-slate-500 mb-2">3. Hours since ingestion</label>
-            <input type="range" id="hours" min="0" max="24" step="0.1" value="2" class="w-full" oninput="runRecommendation()">
-            <div class="text-center font-bold text-xl" id="hours_display">2.0 hours</div>
+        <div class="mb-6">
+            <label class="block text-sm font-semibold text-slate-500 mb-2">Hours since ingestion</label>
+            <input type="range" id="hours" min="0" max="24" step="0.1" value="2" class="w-full accent-slate-900" oninput="updateHours()">
+            <div class="text-center font-bold text-2xl mt-2" id="hours_val">2.0 hours</div>
         </div>
 
         <!-- Dose -->
-        <div>
-            <label class="block text-sm font-bold text-slate-500 mb-2">4. Estimated Dose</label>
+        <div class="mb-8">
+            <label class="block text-sm font-semibold text-slate-500 mb-2">Estimated Dose (optional)</label>
             <input type="text" id="dose" placeholder="e.g. 10 g or 250 mg/kg" 
-                   class="w-full p-4 border-2 rounded-2xl" oninput="runRecommendation()">
+                   class="w-full p-4 border-2 border-slate-200 rounded-2xl" oninput="run()">
         </div>
 
-        <button onclick="runRecommendation()" 
-                class="w-full py-6 bg-slate-900 text-white font-black text-xl rounded-3xl hover:bg-black">
+        <button onclick="run()" 
+                class="w-full py-6 bg-slate-900 hover:bg-black text-white font-black text-xl rounded-3xl transition-all">
             GET RECOMMENDATION
         </button>
     </div>
 
     <!-- Result -->
-    <div id="result" class="hidden mt-8 bg-white rounded-3xl shadow p-8">
-        <h2 id="drug_title" class="text-2xl font-black mb-4"></h2>
-        <div id="status_box" class="p-6 rounded-2xl text-white text-center font-black text-2xl mb-6"></div>
-        <div id="info" class="space-y-4 text-sm"></div>
+    <div id="result" class="hidden mt-8 bg-white rounded-3xl shadow-xl p-8">
+        <h2 id="drug_name" class="text-3xl font-black mb-4"></h2>
+        <div id="status" class="p-8 rounded-2xl text-center text-2xl font-black mb-6"></div>
+        <div id="details" class="grid grid-cols-2 gap-6 text-sm"></div>
     </div>
 </div>
 
 <script>
-// Full accurate data from Table 4
-const database = {
-    "paracetamol": {name: "Paracetamol (Acetaminophen)", threshold: "200 mg/kg", maxH: 6, strength: "strong", grade: "B"},
-    "carbamazepine": {name: "Carbamazepine", threshold: "25 mg/kg", maxH: 6, strength: "strong", grade: "C"},
-    "phenobarbital": {name: "Phenobarbital", threshold: "20 mg/kg", maxH: 6, strength: "strong", grade: "C"},
-    "salicylates": {name: "Salicylates (Aspirin)", threshold: "200 mg/kg", maxH: 6, strength: "strong", grade: "C"},
-    "theophylline": {name: "Theophylline / Aminophylline", threshold: "20 mg/kg", maxH: 6, strength: "strong", grade: "C"},
-    "valproate": {name: "Valproic acid / Valproate", threshold: "200 mg/kg", maxH: 6, strength: "strong", grade: "D"},
-    "opioids": {name: "Opioids", threshold: "5 TD", maxH: 6, strength: "weak", grade: "D"},
-    "iron": {name: "Iron", threshold: "No role", maxH: 0, strength: "none", grade: "C"},
-    "lithium": {name: "Lithium", threshold: "No role", maxH: 0, strength: "none", grade: "D"},
-    "metformin": {name: "Metformin", threshold: "No role", maxH: 0, strength: "none", grade: "D"},
-    // Add more from the table as needed
+// Full accurate Table 4 data
+const db = {
+    "paracetamol": {name:"Paracetamol (Acetaminophen)", ir:{strength:"strong", maxH:2, suggestH:4, thresh:"200 mg/kg"}, mr:{strength:"strong", maxH:4, suggestH:12, thresh:"Individual Risk"}, multi:false},
+    "carbamazepine": {name:"Carbamazepine", ir:{strength:"strong", maxH:4, thresh:"25 mg/kg"}, mr:{strength:"strong", maxH:4, thresh:"25 mg/kg"}, multi:true},
+    "phenobarbital": {name:"Phenobarbital", ir:{strength:"strong", maxH:2, thresh:"20 mg/kg"}, multi:true},
+    "salicylates": {name:"Salicylates (Aspirin)", ir:{strength:"strong", maxH:2, suggestH:4, thresh:"200 mg/kg"}, mr:{strength:"weak", maxH:12, thresh:"Individual Risk"}, multi:false},
+    "theophylline": {name:"Theophylline / Aminophylline", ir:{strength:"strong", maxH:2, thresh:"20 mg/kg"}, mr:{strength:"strong", maxH:2, thresh:"20 mg/kg"}, multi:true},
+    "valproate": {name:"Valproic acid / Valproate", ir:{strength:"weak", maxH:2, thresh:"200 mg/kg"}, multi:true},
+    "opioids": {name:"Opioids", ir:{strength:"weak", maxH:2, thresh:"5 TD"}, mr:{strength:"weak", maxH:2, thresh:"5 TD"}, multi:false},
+    "iron": {name:"Iron", ir:{strength:"none", maxH:0, thresh:"No role"}, multi:false},
+    "lithium": {name:"Lithium", ir:{strength:"none", maxH:0, thresh:"No role"}, multi:false},
+    "metformin": {name:"Metformin", ir:{strength:"none", maxH:0, thresh:"No role"}, multi:false},
+    "bupropion": {name:"Bupropion", ir:{strength:"weak", maxH:2, thresh:"20 mg/kg"}, multi:false},
+    "amlodipine": {name:"Amlodipine (CCB)", ir:{strength:"weak", maxH:1, thresh:"3-5 TD"}, multi:false},
+    "verapamil": {name:"Verapamil (CCB)", ir:{strength:"weak", maxH:1, thresh:"3-5 TD"}, multi:false},
+    "propranolol": {name:"Propranolol (Beta Blocker)", ir:{strength:"weak", maxH:1, thresh:"5-6 mg/kg"}, multi:false},
+    "phenytoin": {name:"Phenytoin", ir:{strength:"weak", maxH:2, thresh:"40 mg/kg"}, multi:true},
+    "dapsone": {name:"Dapsone", ir:{strength:"weak", maxH:1, thresh:"6 mg/kg"}, multi:true},
+    "digoxin": {name:"Digoxin", ir:{strength:"weak", maxH:1, thresh:"75 µg/kg"}, multi:true},
+    "tca": {name:"Tricyclic Antidepressants (TCA)", ir:{strength:"weak", maxH:2, thresh:"10 mg/kg"}, multi:false},
+    "ssri": {name:"SSRIs", ir:{strength:"weak", maxH:1, thresh:"15 TD"}, multi:false},
+    "chloroquine": {name:"Chloroquine", ir:{strength:"weak", maxH:1, thresh:"35 mg/kg"}, multi:false},
+    "colchicine": {name:"Colchicine", ir:{strength:"weak", maxH:2, thresh:"0.4 mg/kg"}, multi:true},
+    "quinine": {name:"Quinine", ir:{strength:"weak", maxH:1, thresh:"20 mg/kg"}, multi:false},
+    "venlafaxine": {name:"Venlafaxine", ir:{strength:"weak", maxH:2, thresh:"25 mg/kg"}, multi:false},
+    "warfarin": {name:"Warfarin", ir:{strength:"none", maxH:0, thresh:"0.7 mg/kg"}, multi:false},
+    "methotrexate": {name:"Methotrexate", ir:{strength:"weak", maxH:1, thresh:"10 mg/kg"}, multi:false},
+    "moclobemide": {name:"Moclobemide", ir:{strength:"weak", maxH:1, thresh:"50 mg/kg"}, multi:false},
+    "sulfonylureas": {name:"Sulfonylureas", ir:{strength:"weak", maxH:1, thresh:"5 TD"}, multi:false},
+    "paraquat": {name:"Paraquat", ir:{strength:"weak", maxH:4, thresh:"5 mg/kg"}, multi:false},
+    "thallium": {name:"Thallium", ir:{strength:"weak", maxH:2, thresh:"10 mg/kg"}, multi:true},
+    "ibuprofen": {name:"Ibuprofen", ir:{strength:"weak", maxH:1, thresh:"250 mg/kg"}, multi:false},
+    "isoniazid": {name:"Isoniazid", ir:{strength:"weak", maxH:1, thresh:"40 mg/kg"}, multi:false},
+    "lamotrigine": {name:"Lamotrigine", ir:{strength:"weak", maxH:2, thresh:"30 mg/kg"}, multi:false},
 };
 
 let currentForm = "IR";
@@ -83,66 +104,67 @@ let currentForm = "IR";
 function populateDrugs() {
     const select = document.getElementById("drug");
     select.innerHTML = '<option value="">-- Select Poison --</option>';
-    Object.keys(database).forEach(key => {
+    Object.keys(db).forEach(key => {
         const opt = document.createElement("option");
         opt.value = key;
-        opt.textContent = database[key].name;
+        opt.textContent = db[key].name;
         select.appendChild(opt);
     });
 }
 
-function setForm(btn) {
-    currentForm = btn.dataset.form;
-    document.querySelectorAll('.form-btn').forEach(b => {
-        if (b === btn) {
-            b.classList.add("border-slate-900", "bg-slate-900", "text-white");
-        } else {
-            b.classList.remove("border-slate-900", "bg-slate-900", "text-white");
-        }
-    });
-    runRecommendation();
+function setForm(f) {
+    currentForm = f;
+    document.getElementById("btnIR").classList.toggle("border-slate-900", f === "IR");
+    document.getElementById("btnIR").classList.toggle("bg-slate-900", f === "IR");
+    document.getElementById("btnIR").classList.toggle("text-white", f === "IR");
+    document.getElementById("btnMR").classList.toggle("border-slate-900", f === "MR");
+    run();
 }
 
-function runRecommendation() {
+function updateHours() {
+    document.getElementById("hours_val").textContent = parseFloat(document.getElementById("hours").value).toFixed(1) + " hours";
+    run();
+}
+
+function run() {
     const key = document.getElementById("drug").value;
     if (!key) return;
 
-    const drug = database[key];
+    const drug = db[key];
     const hours = parseFloat(document.getElementById("hours").value);
-    document.getElementById("hours_display").textContent = hours.toFixed(1) + " hours";
+    const data = (currentForm === "MR" && drug.mr) ? drug.mr : drug.ir;
 
     let statusHTML = "";
     let statusClass = "";
 
-    if (drug.strength === "none") {
+    if (data.strength === "none") {
         statusHTML = "❌ NO ROLE — Activated Charcoal is NOT recommended";
-        statusClass = "status-none";
-    } else if (hours > drug.maxH) {
-        statusHTML = `⚠️ Beyond recommended window (max ${drug.maxH}h)`;
-        statusClass = "bg-amber-500";
-    } else if (drug.strength === "strong" && hours <= 4) {
+        statusClass = "none";
+    } else if (hours > data.maxH) {
+        statusHTML = `⚠️ Beyond recommended window (max ${data.maxH} hours)`;
+        statusClass = "bg-amber-600";
+    } else if (data.strength === "strong") {
         statusHTML = "✅ STRONG RECOMMENDATION — Single-dose AC is recommended";
-        statusClass = "status-strong";
+        statusClass = "strong";
     } else {
         statusHTML = "🟡 WEAK RECOMMENDATION / INDIVIDUAL RISK ASSESSMENT";
-        statusClass = "status-weak";
+        statusClass = "weak";
     }
 
     document.getElementById("result").classList.remove("hidden");
-    document.getElementById("drug_title").textContent = drug.name;
-    document.getElementById("status_box").innerHTML = statusHTML;
-    document.getElementById("status_box").className = `p-6 rounded-2xl text-center font-black text-2xl mb-6 ${statusClass}`;
-    
-    document.getElementById("info").innerHTML = `
-        <p><strong>Threshold:</strong> ${drug.threshold}</p>
-        <p><strong>GRADE:</strong> ${drug.grade}</p>
-        <p><strong>Formulation:</strong> ${currentForm}</p>
+    document.getElementById("drug_name").textContent = drug.name + " (" + currentForm + ")";
+    document.getElementById("status").innerHTML = statusHTML;
+    document.getElementById("status").className = `p-8 rounded-2xl text-center text-2xl font-black mb-6 ${statusClass}`;
+
+    document.getElementById("details").innerHTML = `
+        <div><strong>Threshold:</strong> ${data.thresh}</div>
+        <div><strong>Evidence Grade:</strong> ${data.grade || '-'}</div>
     `;
 }
 
 // Initialize
 populateDrugs();
-document.getElementById("hours").addEventListener("input", runRecommendation);
+document.getElementById("hours").addEventListener("input", updateHours);
 </script>
 </body>
 </html>
